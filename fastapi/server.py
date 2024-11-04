@@ -63,3 +63,41 @@ class FormData(BaseModel):
 @app.post("/envio/")
 async def submit_form(data: FormData):
     return {"message": "Formulario recibido", "data": data}
+
+#CITAS
+class Cita(BaseModel):
+    id: Optional[int]
+    nombre_animal: str
+    nombre_dueño: str
+    tratamiento: str
+    fecha_inicio: datetime
+    fecha_fin: Optional[datetime] = None
+#Base de datos simulada para guardar las citas
+citas_db = []
+
+#Nueva cita
+@app.post("/citas/{cita_id}", response_model=Cita)
+def crear_cita(cita: Cita):
+    global next_id
+    cita.id = next_id
+    next_id += 1
+    citas_db.append(cita)
+    return cita
+#Modificar cita
+@app.put("/citas/{cita_id}", response_model=Cita)
+def modificar_cita(cita_id: int, cita_actualizada: Cita):
+    for index, cita in enumerate(citas_db):
+        if cita.id == cita_id:
+            citas_db[index] = cita_actualizada
+            citas_db[index].id = cita_id
+            return citas_db[index]
+    raise HTTPExecption(status_code=404, detail="Cita no encontrada")
+
+#Eliminar cita
+#revisar 
+@app.delete("/citas/{cita_id}")
+def eliminar_cita(cita_id: int):
+    if cita.id == cita_id:
+        return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
+    else:
+        return {"error": f"No se pudo borrar la cita"}
