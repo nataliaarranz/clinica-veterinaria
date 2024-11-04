@@ -2,10 +2,12 @@ import shutil
 
 import io
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, File, UploadFile,Form
+from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
 from typing import  List
 from typing import Optional
+from datetime import datetime
+from pydantic import BaseModel
 
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -92,13 +94,14 @@ def modificar_cita(cita_id: int, cita_actualizada: Cita):
             citas_db[index] = cita_actualizada
             citas_db[index].id = cita_id
             return citas_db[index]
-    raise HTTPExecption(status_code=404, detail="Cita no encontrada")
+    raise HTTPException(status_code=404, detail="Cita no encontrada")
 
 #Eliminar cita
 #revisar 
 @app.delete("/citas/{cita_id}")
 def eliminar_cita(cita_id: int):
-    if cita.id == cita_id:
-        return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
-    else:
-        return {"error": f"No se pudo borrar la cita"}
+    for index, cita in enumerate(citas_db):
+        if cita.id == cita_id:
+            del citas_db[index]
+            return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
+    raise HTTPException(status_code=404, detail="Cita no encontrada")
