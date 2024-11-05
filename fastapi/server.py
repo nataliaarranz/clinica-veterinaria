@@ -47,6 +47,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
+#app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=["*"],  # Cambia esto a los dominios necesarios para mayor seguridad
+#    allow_credentials=True,
+#    allow_methods=["*"],
+#    allow_headers=["*"],
+#)
+
 
 @app.get("/retrieve_data/")
 def retrieve_data ():
