@@ -5,30 +5,46 @@ from streamlit_calendar import calendar
 import requests
 
 
-st.title("Demo de streamlit-calendar con popup para inserción de datos 📆")
+st.title("Calendario de citas veterinarias 📆")
 
 
-def send(data):
-    #r = requests.post(
-    #    backend, json=data
-    #)
-    #return r.status_code
-    return '200'
-@st.dialog("Mete info!")
+def send(data, method="POST"):
+    try:
+        if method == "POST":
+            response = requests.post(backend, json=data)
+        elif method == "PUT":
+            response = requests.put(backend, json=data)
+        elif method == "DELETE":
+            response = requests.delete(backend, json=data)
+        if response.status_code == 200:
+            return '200'
+        else:
+            return str(response.status_code)
+    except Exception as e:
+        #mostrar errores
+        return str(e)
+    
+@st.dialog("Registrar nueva cita")
 def popup ():
-    st.write(f'Fecha de la cita')
-    with st.form("my_form"):
-        tratamiento = st.text_input("Ingrese el tratamiento:")
-        #edificio = ,,,
-        #
-        submitted = st.form_submit_button("Submit form")
+    st.write(f'Fecha de la cita:')
+    with st.form("form_nueva_cita"):
+        nombre_animal = st.text_input("Nombre animal: ")
+        nombre_dueño = st.text_input("Nombre dueño: ")
+        tratamiento = st.text_input("Tipo de cita:")
+        submitted = st.form_submit_button("Registrar cita")
 
     if submitted:
-        envio = send(...)
+        data = {
+            "nombre_animal": nombre_animal,
+            "nombre_dueño": nombre_dueño,
+            "tratamiento": tratamiento,
+            "fecha_inicio": st.session_state["time_inicial"],
+        }
+        envio = send(data)
         if envio == '200':
-            st.success("Enviado con éxito, puede cerrar!")
+            st.success("Registrado con éxito, puede cerrar!")
         else:
-            st.error("No se envio, status_code: {}".format(envio))
+            st.error("No se registro, status_code: {}".format(envio))
 
 
 mode = st.selectbox(
@@ -37,87 +53,28 @@ mode = st.selectbox(
         "daygrid",
         "timegrid",
         "timeline",
-        "resource-daygrid",
+        "resource-daygrid", #consultas
         "resource-timegrid",
-        "resource-timeline",
+        "resource-timeline", #asignar y visualizar citas en diferentes lugares
         "list",
         "multimonth",
     ),
 )
-
+#eventos registrados
 events = [
     {
         "title": "Consulta Perrito",
         "color": "#FF6C6C",
-        "start": "2023-07-03",
-        "end": "2023-07-05",
+        "start": "2024-11-03",
+        "end": "2023-11-05",
         "resourceId": "a",
     },
-    {
-        "title": "Consulta Gatito ",
-        "color": "#FFBD45",
-        "start": "2023-07-01",
-        "end": "2023-07-10",
-        "resourceId": "b",
-    },
-    {
-        "title": "Consulta Perrito",
-        "color": "#FF4B4B",
-        "start": "2023-07-20",
-        "end": "2023-07-20",
-        "resourceId": "c",
-    },
-    {
-        "title": "Consulta Gatito",
-        "color": "#FF6C6C",
-        "start": "2023-07-23",
-        "end": "2023-07-25",
-        "resourceId": "d",
-    },
-    {
-        "title": "Consulta Loro",
-        "color": "#FFBD45",
-        "start": "2023-07-29",
-        "end": "2023-07-30",
-        "resourceId": "e",
-    },
-    {
-        "title": "Consulta Guacamayo Ibérico",
-        "color": "#FF4B4B",
-        "start": "2023-07-28",
-        "end": "2023-07-20",
-        "resourceId": "f",
-    },
-    {
-        "title": "Estudio",
-        "color": "#FF4B4B",
-        "start": "2023-07-01T08:30:00",
-        "end": "2023-07-01T10:30:00",
-        "resourceId": "a",
-    },
-    {
-        "title": "Recados",
-        "color": "#3D9DF3",
-        "start": "2023-07-01T07:30:00",
-        "end": "2023-07-01T10:30:00",
-        "resourceId": "b",
-    },
-    {
-        "title": "Revisión Perrito",
-        "color": "#3DD56D",
-        "start": "2023-07-02T10:40:00",
-        "end": "2023-07-02T12:30:00",
-        "resourceId": "c",
-    },
-
+    
 ]
+#recursos del calendario (consultas)
 calendar_resources = [
     {"id": "a", "building": "Clinica 1", "title": "Consulta A"},
-    {"id": "b", "building": "Clinica 1", "title": "Consulta A"},
     {"id": "c", "building": "Clinica 1", "title": "Consulta B"},
-    {"id": "d", "building": "Clinica 1", "title": "Consulta B"},
-    {"id": "e", "building": "Clinica 1", "title": "Consulta A"},
-    {"id": "f", "building": "Clinica 1", "title": "Consulta B"},
 ]
 
 
@@ -128,16 +85,19 @@ fecha = ''
 
 
 calendar_options = {
-    "editable": "true",
-    "navLinks": "true",
+    #"true"
+    "editable": True,
+    "navLinks": True,
     "resources": calendar_resources,
-    "selectable": "true",
+    "selectable": True,
 }
 calendar_options = {
             **calendar_options,
-            "initialDate": "2023-07-01",
+            "initialDate": "2024-11-01",
             "initialView": "resourceTimeGridDay",
             "resourceGroupField": "building",
+            "slotMinTime": "8:00:00", #hora de comienzo de citas
+            "slotMaxTime": "18:00:00", #hora de fin de citas
         }
 
 state = calendar(
@@ -161,20 +121,44 @@ state = calendar(
 )
 
 name = ''
+#Actualizar eventos
 if state.get("eventsSet") is not None:
     st.session_state["events"] = state["eventsSet"]
     #st.session_state["fecha"] = state["date"]
 
+#Registrar nueva cita
 if state.get('select') is not None:
     st.session_state["time_inicial"] = state["select"]["start"]
     st.session_state["time_final"] = state["select"]["end"]
     popup()
 
+#Modificar citas
 if state.get('eventChange') is not None:
     data = state.get('eventChange').get('event')
     ## aquí haríamos un requests.post()
+    modified_data = {
+        "id": data["id"],
+        "start": data["start"],
+        "end": data["end"]
+    }
+    envio = send(modified_data, method="PUT")
+    if envio == '200':
+        st.success('cita modificada con éxito')
+    else:
+        st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
-    st.success('cita camboada con éxito')
+
+#Cancelar citas
+if state.get('eventClick') is not None:
+    data = state['eventClick']['event']
+    if st.button(f"Cancelar cita {data['title']}"):
+        envio = send({"id": data["id"]}, method="DELETE")
+        if envio == "200":
+            st.success("Cita cancelada.")
+            #actualizar estado de eventos
+            st.session_state["events"] = [event for event in st.session_state["events"] if event["id"] != data["id"]]
+        else:
+            st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
 if st.session_state.get("fecha") is not None:
     st.write('fecha')
@@ -182,6 +166,3 @@ if st.session_state.get("fecha") is not None:
    # with st.popover("Open popover"):
    #     st.markdown("Hello World 👋")
    #     name = st.text_input("What's your name?")
-
-
-
