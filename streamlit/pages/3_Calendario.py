@@ -78,7 +78,7 @@ calendar_resources = [
 ]
 
 
-backend = "http://fastapi:8000/citas"  # Esta URL meterla en un parámetro de configuración
+backend = "http://localhost:8501/citas"  # Esta URL meterla en un parámetro de configuración
 
 
 fecha = ''
