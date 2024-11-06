@@ -1,7 +1,5 @@
 import streamlit as st
-
 from streamlit_calendar import calendar
-
 import requests
 
 
@@ -80,25 +78,17 @@ calendar_resources = [
 
 backend = "http://localhost:8501/citas"  # Esta URL meterla en un parámetro de configuración
 
-
-fecha = ''
-
-
 calendar_options = {
-    #"true"
     "editable": True,
     "navLinks": True,
     "resources": calendar_resources,
     "selectable": True,
+    "initialDate": "2024-11-01",
+    "initialView": "resourceTimeGridDay",
+    "resourceGroupField": "building",
+    "slotMinTime": "8:00:00",
+    "slotMaxTime": "18:00:00",
 }
-calendar_options = {
-            **calendar_options,
-            "initialDate": "2024-11-01",
-            "initialView": "resourceTimeGridDay",
-            "resourceGroupField": "building",
-            "slotMinTime": "8:00:00", #hora de comienzo de citas
-            "slotMaxTime": "18:00:00", #hora de fin de citas
-        }
 
 state = calendar(
     events=st.session_state.get("events", events),
@@ -120,11 +110,9 @@ state = calendar(
     key='timegrid',
 )
 
-name = ''
 #Actualizar eventos
 if state.get("eventsSet") is not None:
     st.session_state["events"] = state["eventsSet"]
-    #st.session_state["fecha"] = state["date"]
 
 #Registrar nueva cita
 if state.get('select') is not None:
@@ -159,10 +147,3 @@ if state.get('eventClick') is not None:
             st.session_state["events"] = [event for event in st.session_state["events"] if event["id"] != data["id"]]
         else:
             st.error(f"No se pudo modificar la cita, status_code: {envio}")
-
-if st.session_state.get("fecha") is not None:
-    st.write('fecha')
-    #st.write(st.session_state["fecha"])
-   # with st.popover("Open popover"):
-   #     st.markdown("Hello World 👋")
-   #     name = st.text_input("What's your name?")
