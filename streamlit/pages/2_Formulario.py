@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # URL del microservicio FastAPI
-url = "http://localhost:8000/alta_animal/"
+url = "http://localhost:8501/alta_animal"
 
 # Archivo CSV donde se guardan los datos de los dueños y animales
 registro_csv = "registro_dueños_animales.csv"
