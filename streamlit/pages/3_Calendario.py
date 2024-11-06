@@ -4,6 +4,8 @@ import requests
 
 st.title("Calendario de citas veterinarias 📆")
 
+backend = "http://localhost:8501/citas"
+
 def send(data, method="POST"):
     try:
         if method == "POST":
@@ -19,7 +21,7 @@ def send(data, method="POST"):
     except Exception as e:
         return str(e)
 
-@st.dialog("Registrar nueva cita")
+#@st.dialog("Registrar nueva cita")
 def popup():
     st.write('Fecha de la cita:')
     with st.form("form_nueva_cita"):
@@ -29,17 +31,20 @@ def popup():
         submitted = st.form_submit_button("Registrar cita")
 
     if submitted:
-        data = {
-            "nombre_animal": nombre_animal,
-            "nombre_dueño": nombre_dueño,
-            "tratamiento": tratamiento,
-            "fecha_inicio": st.session_state["time_inicial"],
-        }
-        envio = send(data)
-        if envio == '200':
-            st.success("Registrado con éxito, puede cerrar!")
-        else:
-            st.error("No se registró, status_code: {}".format(envio))
+            if "time_inicial" in st.session_state:
+                data = {
+                    "nombre_animal": nombre_animal,
+                    "nombre_dueño": nombre_dueño,
+                    "tratamiento": tratamiento,
+                    "fecha_inicio": st.session_state["time_inicial"],
+                }
+                envio = send(data)
+                if envio == '200':
+                    st.success("Registrado con éxito, puede cerrar!")
+                else:
+                    st.error("No se registró, status_code: {}".format(envio))
+            else:
+                st.error("No se ha seleccionado una fecha.")
 
 mode = st.selectbox(
     "Calendar Mode:",
@@ -70,7 +75,7 @@ calendar_resources = [
     {"id": "c", "building": "Clinica 1", "title": "Consulta B"},
 ]
 
-backend = "http://localhost:8501/citas"
+
 
 calendar_options = {
     "editable": True,
@@ -112,6 +117,7 @@ if state.get('select') is not None:
     st.session_state["time_final"] = state["select"]["end"]
     popup()
 
+#Modificar cita
 if state.get('eventChange') is not None:
     data = state.get('eventChange').get('event')
     modified_data = {
@@ -125,6 +131,7 @@ if state.get('eventChange') is not None:
     else:
         st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
+#Cancelar cita
 if state.get('eventClick') is not None:
     data = state['eventClick']['event']
     if st.button(f"Cancelar cita {data['title']}"):
