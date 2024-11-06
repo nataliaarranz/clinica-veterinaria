@@ -2,9 +2,7 @@ import streamlit as st
 from streamlit_calendar import calendar
 import requests
 
-
 st.title("Calendario de citas veterinarias 📆")
-
 
 def send(data, method="POST"):
     try:
@@ -19,12 +17,11 @@ def send(data, method="POST"):
         else:
             return str(response.status_code)
     except Exception as e:
-        #mostrar errores
         return str(e)
-    
+
 @st.dialog("Registrar nueva cita")
-def popup ():
-    st.write(f'Fecha de la cita:')
+def popup():
+    st.write('Fecha de la cita:')
     with st.form("form_nueva_cita"):
         nombre_animal = st.text_input("Nombre animal: ")
         nombre_dueño = st.text_input("Nombre dueño: ")
@@ -42,8 +39,7 @@ def popup ():
         if envio == '200':
             st.success("Registrado con éxito, puede cerrar!")
         else:
-            st.error("No se registro, status_code: {}".format(envio))
-
+            st.error("No se registró, status_code: {}".format(envio))
 
 mode = st.selectbox(
     "Calendar Mode:",
@@ -51,32 +47,30 @@ mode = st.selectbox(
         "daygrid",
         "timegrid",
         "timeline",
-        "resource-daygrid", #consultas
+        "resource-daygrid",  # consultas
         "resource-timegrid",
-        "resource-timeline", #asignar y visualizar citas en diferentes lugares
+        "resource-timeline",  # asignar y visualizar citas en diferentes lugares
         "list",
         "multimonth",
     ),
 )
-#eventos registrados
+
 events = [
     {
         "title": "Consulta Perrito",
         "color": "#FF6C6C",
         "start": "2024-11-03",
-        "end": "2023-11-05",
+        "end": "2024-11-05",
         "resourceId": "a",
     },
-    
 ]
-#recursos del calendario (consultas)
+
 calendar_resources = [
     {"id": "a", "building": "Clinica 1", "title": "Consulta A"},
     {"id": "c", "building": "Clinica 1", "title": "Consulta B"},
 ]
 
-
-backend = "http://localhost:8501/citas"  # Esta URL meterla en un parámetro de configuración
+backend = "http://localhost:8501/citas"
 
 calendar_options = {
     "editable": True,
@@ -110,20 +104,16 @@ state = calendar(
     key='timegrid',
 )
 
-#Actualizar eventos
 if state.get("eventsSet") is not None:
     st.session_state["events"] = state["eventsSet"]
 
-#Registrar nueva cita
 if state.get('select') is not None:
     st.session_state["time_inicial"] = state["select"]["start"]
     st.session_state["time_final"] = state["select"]["end"]
     popup()
 
-#Modificar citas
 if state.get('eventChange') is not None:
     data = state.get('eventChange').get('event')
-    ## aquí haríamos un requests.post()
     modified_data = {
         "id": data["id"],
         "start": data["start"],
@@ -131,19 +121,16 @@ if state.get('eventChange') is not None:
     }
     envio = send(modified_data, method="PUT")
     if envio == '200':
-        st.success('cita modificada con éxito')
+        st.success('Cita modificada con éxito')
     else:
         st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
-
-#Cancelar citas
 if state.get('eventClick') is not None:
     data = state['eventClick']['event']
     if st.button(f"Cancelar cita {data['title']}"):
         envio = send({"id": data["id"]}, method="DELETE")
         if envio == "200":
             st.success("Cita cancelada.")
-            #actualizar estado de eventos
             st.session_state["events"] = [event for event in st.session_state["events"] if event["id"] != data["id"]]
         else:
-            st.error(f"No se pudo modificar la cita, status_code: {envio}")
+            st.error(f"No se pudo cancelar la cita, status_code: {envio}")
