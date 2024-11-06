@@ -21,7 +21,7 @@ def send(data, method="POST"):
     except Exception as e:
         return str(e)
 
-#@st.dialog("Registrar nueva cita")
+@st.dialog("Registrar nueva cita")
 def popup():
     st.write('Fecha de la cita:')
     with st.form("form_nueva_cita"):

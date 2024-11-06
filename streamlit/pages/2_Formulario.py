@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # URL del microservicio FastAPI
-url = "http://fastapi:8000/alta_animal/"
+url = "http://localhost:8000/alta_animal/"
 
 # Archivo CSV donde se guardan los datos de los dueños y animales
 registro_csv = "registro_dueños_animales.csv"
@@ -33,11 +33,15 @@ def crear_formulario():
         # Envío del formulario
         submit_button = st.form_submit_button("Registrar Dueño y Animal")
 
-# Procesar los datos del formulario
-    if submit_button:
-        procesar_formulario(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño, nombre_animal, especie_animal, fecha_nacimiento_animal, sexo_animal)
+        # Procesar los datos del formulario
+        if submit_button:
+            procesar_formulario(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño, nombre_animal, especie_animal, fecha_nacimiento_animal, sexo_animal)
 
 def procesar_formulario(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño, nombre_animal, especie_animal, fecha_nacimiento_animal, sexo_animal):
+    if not all([nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño, nombre_animal]):
+        st.error("Todos los campos son obligatorios.")
+        return
+    
     payload = {
         "nombre_dueño": nombre_dueño,
         "telefono_dueño": telefono_dueño,
@@ -55,18 +59,25 @@ def procesar_formulario(nombre_dueño, telefono_dueño, email_dueño, dni_dueño
         response.raise_for_status()
         st.success("Dueño y Animal registrados correctamente")
         guardar_datos_csv(payload)
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"Error HTTP: {http_err}")
     except requests.exceptions.RequestException as e:
         st.error(f"No se pudo dar de alta, error: {e}")
+    except Exception as e:
+        st.error(f"Un error inesperado ocurrió: {e}")
 
 def guardar_datos_csv(payload):
-    if os.path.exists(registro_csv):
-        registro_df = pd.read_csv(registro_csv)
-    else:
-        registro_df = pd.DataFrame(columns=["nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño", "direccion_dueño", "nombre_animal", "especie_animal", "fecha_nacimiento_animal", "sexo_animal"])
+    try:
+        if os.path.exists(registro_csv):
+            registro_df = pd.read_csv(registro_csv)
+        else:
+            registro_df = pd.DataFrame(columns=["nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño", "direccion_dueño", "nombre_animal", "especie_animal", "fecha_nacimiento_animal", "sexo_animal"])
 
-    nuevo_registro = pd.DataFrame([payload])
-    registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-    registro_df.to_csv(registro_csv, index=False)
+        nuevo_registro = pd.DataFrame([payload])
+        registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
+        registro_df.to_csv(registro_csv, index=False)
+    except Exception as e:
+        st.error(f"No se pudo guardar en el archivo CSV, error: {e}")
 
 def buscar_registros():
     st.header("Buscar Registros por DNI del Dueño")
@@ -88,27 +99,27 @@ def buscar_registros():
             st.warning("Por favor, ingrese un nombre para buscar")
 
 # Ejecutar funciones
-crear_formulario()
-buscar_registros()
+#crear_formulario()
+#buscar_registros()
    
         
 # --- SECCIÓN DE BÚSQUEDA DE DUEÑOS ---
-st.header("Buscar Registros por DNI del Dueño")
-nombre_dueño_buscar = st.text_input("Ingrese el nombre del dueño para buscar", key = "buscar_dueño")
-if st.button("Buscar", key = "boton_buscar_dueño"):
-    if nombre_dueño_buscar:
-        if os.path.exists(registro_csv):
-            # Cargamos los datos del CSV
-            df_merged = pd.read_csv(registro_csv)
-            # Filtrar el DataFrame para encontrar registros que coincidan con el nombre del dueño
-            df_resultados = df_merged[df_merged['nombre_dueño']. str. contains(nombre_dueño_buscar, case = False, na = False)]
-            # Mostrar los resultados
-            if not df_resultados.empty:
-                st.write("Resultados de la Búsqueda: ")
-                st.dataframe(df_resultados)
-            else: 
-                st.error("No se encontraron registros para ese dueño.")
-        else:
-            st.warning("El archivo de registro no existe. Registre al menos un dueño y animal primero.")
-    else: 
-        st.warning("Por favor, ingrese un nombre para buscar")
+#st.header("Buscar Registros por DNI del Dueño")
+#nombre_dueño_buscar = st.text_input("Ingrese el nombre del dueño para buscar", key = "buscar_dueño")
+#if st.button("Buscar", key = "boton_buscar_dueño"):
+#    if nombre_dueño_buscar:
+#        if os.path.exists(registro_csv):
+#            # Cargamos los datos del CSV
+#            df_merged = pd.read_csv(registro_csv)
+#            # Filtrar el DataFrame para encontrar registros que coincidan con el nombre del dueño
+#            df_resultados = df_merged[df_merged['nombre_dueño']. str. contains(nombre_dueño_buscar, case = False, na = False)]
+#            # Mostrar los resultados
+#            if not df_resultados.empty:
+#                st.write("Resultados de la Búsqueda: ")
+#                st.dataframe(df_resultados)
+#            else: 
+#                st.error("No se encontraron registros para ese dueño.")
+#        else:
+#            st.warning("El archivo de registro no existe. Registre al menos un dueño y animal primero.")
+#    else: 
+#        st.warning("Por favor, ingrese un nombre para buscar")
