@@ -4,8 +4,7 @@ import io
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
-from typing import  List
-from typing import Optional
+from typing import  List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -87,7 +86,7 @@ class Cita(BaseModel):
 citas_db = []
 
 #Nueva cita
-@app.post("/citas/{cita_id}", response_model=Cita) ## revisar y no meter el cita_id
+@app.post("/citas/", response_model=Cita) ## revisar y no meter el cita_id
 def crear_cita(cita: Cita):
     global next_id
     cita.id = next_id
@@ -113,3 +112,42 @@ def eliminar_cita(cita_id: int):
             del citas_db[index]
             return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+#Registrar dueño y animal
+@app.post("/alta_animal/")
+async def alta_animal(data: RegistroAnimal):
+    #validar datos
+    try:
+        #cargar csv
+        if os.path.exists(registro_csv):
+            registro_df = pd.read_csv(registro_csv)
+        #crear csv
+        else:
+            registro_df = pd.DataFrame(columns=[
+                "nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño",
+                "direccion_dueño", "nombre_animal", "especie_animal",
+                "fecha_nacimiento_animal", "sexo_animal"
+            ])
+        nuevo_registro = pd.DataFrame([data.dict()])
+        registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
+        registro_df.to_csv(registro_csv, index=False)
+        # Responder con un mensaje de éxito
+        return {"message": "Dueño y Animal registrados correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+#Buscar dueño y animal
+@app.get("/buscar_registros/")
+def buscar_registros(nombre_dueño: Optional[str] = None):
+    if not os.path.exists(registro_csv):
+        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado")
+    
+    registro_df = pd.read_csv(registro_csv)
+    
+    if nombre_dueño:
+        # Filtrar registros por el nombre del dueño
+        resultados = registro_df[registro_df['nombre_dueño'].str.contains(nombre_dueño, case=False, na=False)]
+        if resultados.empty:
+            return {"message": "No se encontraron registros para ese dueño"}
+        return resultados.to_dict(orient="records")
+    
+    return registro_df.to_dict(orient="records")
