@@ -12,6 +12,7 @@ registro_csv = "registro_dueños_animales.csv"
 
 st.title("Registro de Dueños y Animales 🐾")
 
+# --- SECCIÓN DE REGISTRO DE DUEÑOS Y ANIMALES ---
 # Crear el formulario
 with st.form("registro_animales"):
     # Datos del dueño
@@ -67,3 +68,28 @@ if submit_button:
         registro_df.to_csv(registro_csv, index = False)
     else:
         st.error("Error al registrar los datos del Dueño y Animal")
+
+# --- SECCIÓN DE BÚSQUEDA DE DUEÑOS ---
+st.header("Buscar Registros por DNI del Dueño")
+
+nombre_dueño_buscar = st.text_input("Ingrese el nombre del dueño para buscar", key = "buscar_dueño")
+
+if st.button("Buscar", key = "boton_buscar_dueño"):
+    if nombre_dueño_buscar:
+        if os.path.exists(registro_csv):
+            # Cargamos los datos del CSV
+            df_merged = pd.read_csv(registro_csv)
+
+            # Filtrar el DataFrame para encontrar registros que coincidan con el nombre del dueño
+            df_resultados = df_merged[df_merged['nombre_dueño']. str. contains(nombre_dueño_buscar, case = False, na = False)]
+
+            # Mostrar los resultados
+            if not df_resultados.empty:
+                st.write("Resultados de la Búsqueda: ")
+                st.dataframe(df_resultados)
+            else: 
+                st.error("No se encontraron registros para ese dueño.")
+        else:
+            st.warning("El archivo de registro no existe. Registre al menos un dueño y animal primero.")
+    else: 
+        st.warning("Por favor, ingrese un nombre para buscar")
