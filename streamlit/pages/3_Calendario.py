@@ -4,7 +4,7 @@ import requests
 
 st.title("Calendario de citas veterinarias 📆")
 
-backend = "http://localhost:8501/citas"
+backend = "http://fastapi:8000/citas"
 
 def send(data, method="POST"):
     try:

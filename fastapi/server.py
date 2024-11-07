@@ -87,7 +87,7 @@ class Cita(BaseModel):
 citas_db = []
 
 #Nueva cita
-@app.post("/citas/{cita_id}", response_model=Cita)
+@app.post("/citas/{cita_id}", response_model=Cita) ## revisar y no meter el cita_id
 def crear_cita(cita: Cita):
     global next_id
     cita.id = next_id
@@ -95,7 +95,7 @@ def crear_cita(cita: Cita):
     citas_db.append(cita)
     return cita
 #Modificar cita
-@app.put("/citas/{cita_id}", response_model=Cita)
+@app.put("/citas/{cita_id}", response_model=Cita)  ## Ojo, aquí en algún momento habrás tenido que enviar el id de la cita que quieres modificar
 def modificar_cita(cita_id: int, cita_actualizada: Cita):
     for index, cita in enumerate(citas_db):
         if cita.id == cita_id:
@@ -106,7 +106,7 @@ def modificar_cita(cita_id: int, cita_actualizada: Cita):
 
 #Eliminar cita
 #revisar 
-@app.delete("/citas/{cita_id}")
+@app.delete("/citas/{cita_id}") # Lo mismo que en put
 def eliminar_cita(cita_id: int):
     for index, cita in enumerate(citas_db):
         if cita.id == cita_id:

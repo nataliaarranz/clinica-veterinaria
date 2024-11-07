@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # URL del microservicio FastAPI
-url = "http://localhost:8501/alta_animal"
+url = "http://fastapi:8000/alta_animal"
 
 # Archivo CSV donde se guardan los datos de los dueños y animales
 registro_csv = "registro_dueños_animales.csv"
@@ -56,9 +56,12 @@ def procesar_formulario(nombre_dueño, telefono_dueño, email_dueño, dni_dueño
 
     try:
         response = requests.post(url, json=payload)
-        response.raise_for_status()
-        st.success("Dueño y Animal registrados correctamente")
-        guardar_datos_csv(payload)
+        #response.raise_for_status()
+        if response.status_code == 200:
+            st.success("Dueño y Animal registrados correctamente")
+            guardar_datos_csv(payload)
+        else:
+            raise Exception ('No se ha guardado el elemento')
     except requests.exceptions.HTTPError as http_err:
         st.error(f"Error HTTP: {http_err}")
     except requests.exceptions.RequestException as e:
