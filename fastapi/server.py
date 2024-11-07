@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
 from typing import  List, Optional
-from datetime import datetime
-from pydantic import BaseModel
+from datetime import datetime, date
+from pydantic import BaseModel, EmailStr
 
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -112,6 +112,17 @@ def eliminar_cita(cita_id: int):
             del citas_db[index]
             return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+class RegistroAnimal(BaseModel):
+    nombre_dueño: str
+    telefono_dueño: str
+    email_dueño: EmailStr  
+    dni_dueño: str
+    direccion_dueño: str
+    nombre_animal: str
+    especie_animal: str  # Puede ser "Perro" o "Gato"
+    fecha_nacimiento_animal: date  # Se espera una fecha en formato YYYY-MM-DD
+    sexo_animal: str
 
 #Registrar dueño y animal
 @app.post("/alta_animal/")
