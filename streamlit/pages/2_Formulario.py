@@ -86,7 +86,7 @@ def buscar_registros():
     st.header("Buscar Registros por DNI del Dueño")
     nombre_dueño_buscar = st.text_input("Ingrese el nombre del dueño para buscar", key="buscar_dueño")
     
-    if st.button("Buscar", key="boton_buscar_dueño"):
+    if st.button("Buscar", key="boton_dueño"):
         if nombre_dueño_buscar:
             if os.path.exists(registro_csv):
                 df_merged = pd.read_csv(registro_csv)
@@ -109,7 +109,7 @@ buscar_registros()
 # --- SECCIÓN DE BÚSQUEDA DE DUEÑOS ---
 st.header("Buscar Registros por DNI del Dueño")
 nombre_dueño_buscar = st.text_input("Ingrese el nombre del dueño para buscar", key = "buscar_dueño")
-if st.button("Buscar", key = "boton_buscar_dueño"):
+if st.button("Buscar", key = "boton_dueño"):
     if nombre_dueño_buscar:
         if os.path.exists(registro_csv):
             # Cargamos los datos del CSV

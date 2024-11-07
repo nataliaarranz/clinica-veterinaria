@@ -116,7 +116,7 @@ def eliminar_cita(cita_id: int):
 class RegistroAnimal(BaseModel):
     nombre_dueño: str
     telefono_dueño: str
-    email_dueño: EmailStr  
+    email_dueño: str  
     dni_dueño: str
     direccion_dueño: str
     nombre_animal: str
