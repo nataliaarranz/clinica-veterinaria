@@ -56,7 +56,7 @@ def crear_formulario_dueños():
         submit_button = st.form_submit_button(label="Dar de alta")
         
         if submit_button:
-            procesar_formulario_animales(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño)
+            procesar_formulario_dueños(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño)
 #Llamar función crear formulario
 crear_formulario_dueños()
 
