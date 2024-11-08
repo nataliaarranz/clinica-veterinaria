@@ -46,15 +46,6 @@ app = FastAPI(
     version="0.1.0",
 )
 
-#app.add_middleware(
-#    CORSMiddleware,
-#    allow_origins=["*"],  # Cambia esto a los dominios necesarios para mayor seguridad
-#    allow_credentials=True,
-#    allow_methods=["*"],
-#    allow_headers=["*"],
-#)
-
-
 @app.get("/retrieve_data/")
 def retrieve_data ():
     todosmisdatos = pd.read_csv('./contratos_inscritos_simplificado_2023.csv',sep=';')
@@ -113,18 +104,43 @@ def eliminar_cita(cita_id: int):
             return {"message": f"Cita con ID {cita_id} eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-class RegistroAnimal(BaseModel):
+class Dueño(BaseModel):
     nombre_dueño: str
     telefono_dueño: str
     email_dueño: str  
     dni_dueño: str
     direccion_dueño: str
-    nombre_animal: str
-    especie_animal: str  # Puede ser "Perro" o "Gato"
-    fecha_nacimiento_animal: date  # Se espera una fecha en formato YYYY-MM-DD
-    sexo_animal: str
 
-#Registrar dueño y animal
+class Animal(BaseModel):
+    nombre_animal: str
+    numero_chip_animal: str
+    especie_animal: str
+    fecha_nacimiento_animal: date
+    sexo: str
+
+#Registrar dueño
+@app.post("/alta_dueños/")
+async def alta_dueño(data: RegistroDueños):
+    #validar datos
+    try:
+        #cargar csv
+        if os.path.exists(registro_csv):
+            registro_df = pd.read_csv(registro_csv)
+        #crear csv
+        else:
+            registro_df = pd.DataFrame(columns=[
+                "nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño",
+                "direccion_dueño"
+            ])
+        nuevo_registro = pd.DataFrame([data.dict()])
+        registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
+        registro_df.to_csv(registro_csv, index=False)
+        # Responder con un mensaje de éxito
+        return {"message": "Dueño registrado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+
+#Registrar animal
 @app.post("/alta_animal/")
 async def alta_animal(data: RegistroAnimal):
     #validar datos
@@ -135,8 +151,7 @@ async def alta_animal(data: RegistroAnimal):
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño",
-                "direccion_dueño", "nombre_animal", "especie_animal",
+                "nombre_animal", "numero_chip_animal", "especie_animal", 
                 "fecha_nacimiento_animal", "sexo_animal"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
