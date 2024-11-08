@@ -1,13 +1,12 @@
 import shutil
 
 import io
+import os
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
 from typing import  List, Optional
 from datetime import datetime, date
-from pydantic import BaseModel, EmailStr
-
 from pydantic import BaseModel as PydanticBaseModel
 
 class BaseModel(PydanticBaseModel):
@@ -111,21 +110,24 @@ class Dueño(BaseModel):
     dni_dueño: str
     direccion_dueño: str
 
+registroDueños_csv = "registroDueños.csv"
+
 class Animal(BaseModel):
     nombre_animal: str
     numero_chip_animal: str
     especie_animal: str
     fecha_nacimiento_animal: date
     sexo: str
+registroAnimales_csv = "registroAnimales.csv"
 
 #Registrar dueño
 @app.post("/alta_dueños/")
-async def alta_dueño(data: RegistroDueños):
+async def alta_dueño(data: Dueño):
     #validar datos
     try:
         #cargar csv
-        if os.path.exists(registro_csv):
-            registro_df = pd.read_csv(registro_csv)
+        if os.path.exists(registroDueños_csv):
+            registro_df = pd.read_csv(registroDueños_csv)
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
@@ -134,7 +136,7 @@ async def alta_dueño(data: RegistroDueños):
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registro_csv, index=False)
+        registro_df.to_csv(registroDueños_csv, index=False)
         # Responder con un mensaje de éxito
         return {"message": "Dueño registrado correctamente"}
     except Exception as e:
@@ -142,12 +144,12 @@ async def alta_dueño(data: RegistroDueños):
 
 #Registrar animal
 @app.post("/alta_animal/")
-async def alta_animal(data: RegistroAnimal):
+async def alta_animal(data: Animal):
     #validar datos
     try:
         #cargar csv
-        if os.path.exists(registro_csv):
-            registro_df = pd.read_csv(registro_csv)
+        if os.path.exists(registroAnimales_csv):
+            registro_df = pd.read_csv(registroAnimales_csv)
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
@@ -156,24 +158,8 @@ async def alta_animal(data: RegistroAnimal):
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registro_csv, index=False)
+        registro_df.to_csv(registroAnimales_csv, index=False)
         # Responder con un mensaje de éxito
         return {"message": "Dueño y Animal registrados correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
-#Buscar dueño y animal
-@app.get("/buscar_registros/")
-def buscar_registros(nombre_dueño: Optional[str] = None):
-    if not os.path.exists(registro_csv):
-        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado")
-    
-    registro_df = pd.read_csv(registro_csv)
-    
-    if nombre_dueño:
-        # Filtrar registros por el nombre del dueño
-        resultados = registro_df[registro_df['nombre_dueño'].str.contains(nombre_dueño, case=False, na=False)]
-        if resultados.empty:
-            return {"message": "No se encontraron registros para ese dueño"}
-        return resultados.to_dict(orient="records")
-    
-    return registro_df.to_dict(orient="records")
