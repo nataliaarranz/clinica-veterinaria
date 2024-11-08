@@ -2,7 +2,7 @@
 import streamlit as st
 import time
 
-st.set_page_config(page_title='Ejemplito básico, de aquí al cielo', layout='wide',     page_icon="📈")
+st.set_page_config(page_title='Clinica Veterinaria', layout='wide',     page_icon="📈")
 st.image('logo.jpg')
 
 placeholder = st.empty()

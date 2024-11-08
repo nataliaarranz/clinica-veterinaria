@@ -5,28 +5,57 @@ import requests
 st.title("Calendario de citas veterinarias 📆")
 
 backend = "http://fastapi:8000/citas"
+dueños_backend = "http://fastapi:8000/dueños"
+animales_backend = "http://fastapi:8000/animales"
 
-def send(data, method="POST"):
+def send(data, method="POST", cita_id=None):
     try:
+        url = backend if cita_id is None else f"{backend}/{cita_id}"
         if method == "POST":
-            response = requests.post(backend, json=data)
+            response = requests.post(url, json=data)
         elif method == "PUT":
-            response = requests.put(backend, json=data)
+            response = requests.put(url, json=data)
         elif method == "DELETE":
-            response = requests.delete(backend, json=data)
+            response = requests.delete(url)
         if response.status_code == 200:
-            return '200'
+            return response.json() if method == "POST" else '200'
         else:
             return str(response.status_code)
     except Exception as e:
         return str(e)
 
+# Función para obtener los dueños registrados
+def get_dueños():
+    try:
+        response = requests.get(dueños_backend)
+        if response.status_code == 200:
+            return response.json()  # Suponemos que devuelve una lista de dueños
+        else:
+            return []
+    except Exception as e:
+        return []
+
+# Función para obtener los animales registrados
+def get_animales():
+    try:
+        response = requests.get(animales_backend)
+        if response.status_code == 200:
+            return response.json()  # Suponemos que devuelve una lista de dueños
+        else:
+            return []
+    except Exception as e:
+        return []
+
 @st.dialog("Registrar nueva cita")
 def popup():
     st.write('Fecha de la cita:')
     with st.form("form_nueva_cita"):
-        nombre_animal = st.text_input("Nombre animal: ")
-        nombre_dueño = st.text_input("Nombre dueño: ")
+        animales = get_animales()
+        animales_nombre = [animales["nombre"] for animal in animales] if animales else ["No hay animales registrados."]
+        nombre_animal = st.selectbox("Nombre animal: ", animales_nombre)
+        dueños = get_dueños()
+        dueños_nombre = [dueños["nombre"] for dueño in dueños] if dueños else ["No hay dueños registrados."]
+        nombre_dueño = st.selectbox("Nombre dueño: ", dueños_nombre)
         tratamiento = st.text_input("Tipo de cita:")
         submitted = st.form_submit_button("Registrar cita")
 
@@ -38,11 +67,18 @@ def popup():
                     "tratamiento": tratamiento,
                     "fecha_inicio": st.session_state["time_inicial"],
                 }
-                envio = send(data)
-                if envio == '200':
+                response = send(data)
+                if isinstance(response, dict) and "id" in response:
+                    st.session_state["events"].append({
+                        "id": response["id"],
+                        "title": tratamiento,
+                        "color": "#FF6C6C",
+                        "start": st.session_state["time_inicial"],
+                        "end": st.session_state["time_final"],
+                    })
                     st.success("Registrado con éxito, puede cerrar!")
                 else:
-                    st.error("No se registró, status_code: {}".format(envio))
+                    st.error("No se registró, status_code: {}".format(response))
             else:
                 st.error("No se ha seleccionado una fecha.")
 

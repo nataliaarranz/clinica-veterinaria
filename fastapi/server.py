@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
 from typing import  List, Optional
 from datetime import datetime, date
-from pydantic import EmailStr, BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel
 
 class BaseModel(PydanticBaseModel):
     class Config:
@@ -106,17 +106,9 @@ def eliminar_cita(cita_id: int):
 class Dueño(BaseModel):
     nombre_dueño: str
     telefono_dueño: Optional[str] = None
-    email_dueño: EmailStr  
+    email_dueño: str  
     dni_dueño: str
     direccion_dueño: str
-
-dueño_data = Dueño(
-    nombre_dueño="Juan Pérez",
-    telefono_dueño="6359834",
-    email_dueño="juan.perez@gmail.com",
-    dni_dueño="523460834N",
-    direccion_dueño="Madrid España"
-)
 
 registroDueños_csv = "registroDueños.csv"
 
@@ -127,13 +119,6 @@ class Animal(BaseModel):
     fecha_nacimiento_animal: date
     sexo: str
 
-animal_data = Animal(
-    nombre_animal="Firulais",
-    numero_chip_animal="1234567890",
-    especie_animal="Perro",
-    fecha_nacimiento_animal=date(2020, 5, 1),  # Fecha de nacimiento en formato YYYY-MM-DD
-    sexo_animal="Macho"
-)
 registroAnimales_csv = "registroAnimales.csv"
 
 #Registrar dueño
