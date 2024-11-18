@@ -97,7 +97,9 @@ def popup():
                         st.session_state["events"].append({
                             "id": response["id"],
                             "title": tratamiento,
-                            "color": "#FF6C6C",  # Color para las citas ocupadas
+                            "backgroundColor": "#FF6C6C",  # Color de fondo para eventos ocupados
+                            "borderColor": "#FF0000",      # Color opcional para bordes
+                            "textColor": "#FFFFFF",        # Texto blanco
                             "start": st.session_state["time_inicial"],
                             "end": st.session_state["time_final"],
                         })
@@ -124,7 +126,9 @@ mode = st.selectbox(
 events = [
     {
         "title": "Consulta Perrito",
-        "color": "#FF6C6C",
+        "backgroundColor": "#FF6C6C",
+        "borderColor": "#FF0000",
+        "textColor": "#FFFFFF",
         "start": "2024-11-03",
         "end": "2024-11-05",
         "resourceId": "a",
@@ -148,20 +152,9 @@ calendar_options = {
     "slotMaxTime": "18:00:00",
 }
 
-custom_css = """
-.fc-event {
-    background-color: #FF6C6C !important;
-    border: none !important;
-    color: white !important;
-    font-weight: bold;
-    text-align: center;
-}
-"""
-
 state = calendar(
     events=st.session_state.get("events", events),
     options=calendar_options,
-    custom_css=custom_css,
     key='timegrid',
 )
 
