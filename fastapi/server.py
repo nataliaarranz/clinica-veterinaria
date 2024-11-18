@@ -1,5 +1,4 @@
 import shutil
-
 import io
 import os
 from fastapi.responses import JSONResponse
@@ -112,15 +111,6 @@ class Dueño(BaseModel):
 
 registroDueños_csv = "registroDueños.csv"
 
-class Animal(BaseModel):
-    nombre_animal: str
-    numero_chip_animal: str
-    especie_animal: str
-    fecha_nacimiento_animal: date
-    sexo: str
-
-registroAnimales_csv = "registroAnimales.csv"
-
 #Registrar dueño
 @app.post("/alta_dueños/")
 async def alta_dueño(data: Dueño):
@@ -139,11 +129,20 @@ async def alta_dueño(data: Dueño):
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
         registro_df.to_csv(registroDueños_csv, index=False)
         # Responder con un mensaje de éxito
-        return {"message": "Dueño registrado correctamente"}
+        return {"Dueño registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
+class Animal(BaseModel):
+    nombre_animal: str
+    chip_animal: str
+    especie_animal: str
+    fecha_nacimiento_animal: date
+    sexo: str
+
+registroAnimales_csv = "registroAnimales.csv"
 #Registrar animal
+
 @app.post("/alta_animal/")
 async def alta_animal(data: Animal):
     #validar datos
@@ -154,13 +153,13 @@ async def alta_animal(data: Animal):
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_animal", "numero_chip_animal", "especie_animal", 
-                "fecha_nacimiento_animal", "sexo_animal"
+                "nombre_animal", "numero_chip_animal", "especie_animal", "fecha_nacimiento_animal",
+                "sexo_animal"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
         registro_df.to_csv(registroAnimales_csv, index=False)
         # Responder con un mensaje de éxito
-        return {"message": "Dueño y Animal registrados correctamente"}
+        return {"Animal registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
