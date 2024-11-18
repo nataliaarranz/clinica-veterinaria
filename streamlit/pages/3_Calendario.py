@@ -4,6 +4,10 @@ import requests
 
 st.title("Calendario de citas veterinarias 📆")
 
+# Inicializar `st.session_state["events"]` como una lista si no existe o no es una lista
+if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
+    st.session_state["events"] = []
+
 backend = "http://fastapi:8000/citas"
 dueños_backend = "http://fastapi:8000/dueños"
 animales_backend = "http://fastapi:8000/animales"
@@ -49,7 +53,7 @@ def get_animales():
     except Exception as e:
         st.error(f"Excepción al obtener animales: {e}")
         return []
-    
+
 @st.dialog("Registrar nueva cita")
 def popup():
     st.write('Fecha de la cita:')
@@ -81,6 +85,10 @@ def popup():
                 response = send(data)
         
                 if isinstance(response, dict) and "id" in response:
+                    # Asegurarse de que `st.session_state["events"]` sea una lista antes de agregar
+                    if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
+                        st.session_state["events"] = []
+                    
                     st.session_state["events"].append({
                         "id": response["id"],
                         "title": tratamiento,
@@ -100,9 +108,9 @@ mode = st.selectbox(
         "daygrid",
         "timegrid",
         "timeline",
-        "resource-daygrid",  # consultas
+        "resource-daygrid",
         "resource-timegrid",
-        "resource-timeline",  # asignar y visualizar citas en diferentes lugares
+        "resource-timeline",
         "list",
         "multimonth",
     ),
@@ -135,12 +143,10 @@ calendar_options = {
     "slotMaxTime": "18:00:00",
 }
 
-
-
 state = calendar(
     events=st.session_state.get("events", events),
     options=calendar_options,
-    custom_css="""
+    custom_css=""" 
     .fc-event-past {
         opacity: 0.8;
     }
@@ -158,14 +164,17 @@ state = calendar(
 )
 
 if state.get("eventsSet") is not None:
-    st.session_state["events"] = state["eventsSet"]
+    if not isinstance(state["eventsSet"], list):
+        st.error("Los eventos no están en el formato esperado.")
+    else:
+        st.session_state["events"] = state["eventsSet"]
 
 if state.get('select') is not None:
     st.session_state["time_inicial"] = state["select"]["start"]
     st.session_state["time_final"] = state["select"]["end"]
     popup()
 
-#Modificar cita
+# Modificar cita
 if state.get('eventChange') is not None:
     data = state.get('eventChange').get('event')
     modified_data = {
@@ -179,13 +188,16 @@ if state.get('eventChange') is not None:
     else:
         st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
-#Cancelar cita
+# Cancelar cita
 if state.get('eventClick') is not None:
     data = state['eventClick']['event']
     if st.button(f"Cancelar cita {data['title']}"):
         envio = send({"id": data["id"]}, method="DELETE")
         if envio == "200":
+            if "events" in st.session_state and isinstance(st.session_state["events"], list):
+                st.session_state["events"] = [
+                    event for event in st.session_state["events"] if event["id"] != data["id"]
+                ]
             st.success("Cita cancelada.")
-            st.session_state["events"] = [event for event in st.session_state["events"] if event["id"] != data["id"]]
         else:
             st.error(f"No se pudo cancelar la cita, status_code: {envio}")
