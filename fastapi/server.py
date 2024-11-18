@@ -94,6 +94,17 @@ async def alta_dueño(data: Dueño):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
+#Dar de baja dueño
+@app.delete("/baja_dueños/{dni_dueño}")
+async def baja_dueño(dni_dueño: str):
+    #Buscar dueño a dar de baja
+    for index, registro in enumerate (registroDueños_csv):
+        if registro["dni_dueño"] == dni_dueño:
+            eliminado = registroDueños_csv.pop(index)
+            return {"Dueño eliminado correctamente"}
+    raise HTTPException(status_code=404, detail="Dueño no encontrado")
+
+
 # Endpoints para animales
 @app.get("/animales/")
 def get_animales():
@@ -120,6 +131,17 @@ async def alta_animal(data: Animal):
         return {"message": "Animal registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+
+#Dar de baja animal
+@app.delete("/baja_animal/{chip_animal}")
+async def baja_animal(chip_animal: str):
+    #Buscar animal a dar de baja
+    for index, registro in enumerate (registroAnimales_csv):
+        if registro["chip_animal"] == chip_animal:
+            eliminado = registroAnimales_csv.pop(index)
+            return {"Animal eliminado correctamente"}
+    raise HTTPException(status_code=404, detail="Animal no encontrado")
+
 
 # Endpoints para citas (se mantiene tu implementación actual)
 citas_db = []
