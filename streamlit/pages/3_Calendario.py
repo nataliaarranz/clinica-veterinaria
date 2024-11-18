@@ -4,13 +4,13 @@ import requests
 
 st.title("Calendario de citas veterinarias 📆")
 
-# Inicializar `st.session_state["events"]` como una lista si no existe o no es una lista
-if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
-    st.session_state["events"] = []
-
 backend = "http://fastapi:8000/citas"
 dueños_backend = "http://fastapi:8000/dueños"
 animales_backend = "http://fastapi:8000/animales"
+
+# Asegúrate de que `st.session_state["events"]` esté inicializado como lista
+if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
+    st.session_state["events"] = []
 
 def send(data, method="POST", cita_id=None):
     try:
@@ -76,29 +76,34 @@ def popup():
             elif not tratamiento:
                 st.error("El campo 'Tipo de cita' es obligatorio.")
             else:
-                data = {
-                    "nombre_animal": nombre_animal,
-                    "nombre_dueño": nombre_dueño,
-                    "tratamiento": tratamiento,
-                    "fecha_inicio": st.session_state["time_inicial"],
-                }
-                response = send(data)
-        
-                if isinstance(response, dict) and "id" in response:
-                    # Asegurarse de que `st.session_state["events"]` sea una lista antes de agregar
-                    if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
-                        st.session_state["events"] = []
-                    
-                    st.session_state["events"].append({
-                        "id": response["id"],
-                        "title": tratamiento,
-                        "color": "#FF6C6C",
-                        "start": st.session_state["time_inicial"],
-                        "end": st.session_state["time_final"],
-                    })
-                    st.success("Registrado con éxito, puede cerrar!")
+                # Validar si el rango de fechas ya está ocupado
+                conflict = any(
+                    event["start"] <= st.session_state["time_inicial"] < event["end"] or
+                    event["start"] < st.session_state["time_final"] <= event["end"]
+                    for event in st.session_state["events"]
+                )
+                if conflict:
+                    st.error("El rango de fechas ya está ocupado. Selecciona otra hora.")
                 else:
-                    st.error("No se registró, status_code: {}".format(response))
+                    data = {
+                        "nombre_animal": nombre_animal,
+                        "nombre_dueño": nombre_dueño,
+                        "tratamiento": tratamiento,
+                        "fecha_inicio": st.session_state["time_inicial"],
+                        "fecha_fin": st.session_state["time_final"]
+                    }
+                    response = send(data)
+                    if isinstance(response, dict) and "id" in response:
+                        st.session_state["events"].append({
+                            "id": response["id"],
+                            "title": tratamiento,
+                            "color": "#FF6C6C",
+                            "start": st.session_state["time_inicial"],
+                            "end": st.session_state["time_final"],
+                        })
+                        st.success("Registrado con éxito, puede cerrar!")
+                    else:
+                        st.error("No se registró, status_code: {}".format(response))
         else:
             st.error("No se ha seleccionado una fecha.")
 
@@ -146,7 +151,7 @@ calendar_options = {
 state = calendar(
     events=st.session_state.get("events", events),
     options=calendar_options,
-    custom_css=""" 
+    custom_css="""
     .fc-event-past {
         opacity: 0.8;
     }
@@ -164,10 +169,7 @@ state = calendar(
 )
 
 if state.get("eventsSet") is not None:
-    if not isinstance(state["eventsSet"], list):
-        st.error("Los eventos no están en el formato esperado.")
-    else:
-        st.session_state["events"] = state["eventsSet"]
+    st.session_state["events"] = state["eventsSet"]
 
 if state.get('select') is not None:
     st.session_state["time_inicial"] = state["select"]["start"]
@@ -194,10 +196,9 @@ if state.get('eventClick') is not None:
     if st.button(f"Cancelar cita {data['title']}"):
         envio = send({"id": data["id"]}, method="DELETE")
         if envio == "200":
-            if "events" in st.session_state and isinstance(st.session_state["events"], list):
-                st.session_state["events"] = [
-                    event for event in st.session_state["events"] if event["id"] != data["id"]
-                ]
+            st.session_state["events"] = [
+                event for event in st.session_state["events"] if event["id"] != data["id"]
+            ]
             st.success("Cita cancelada.")
         else:
             st.error(f"No se pudo cancelar la cita, status_code: {envio}")
