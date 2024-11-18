@@ -1,11 +1,13 @@
 import shutil
+
 import io
-import os
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, File, UploadFile,Form
 import pandas as pd
 from typing import  List, Optional
 from datetime import datetime, date
+from pydantic import BaseModel, EmailStr
+
 from pydantic import BaseModel as PydanticBaseModel
 
 class BaseModel(PydanticBaseModel):
@@ -34,7 +36,6 @@ class Contrato(BaseModel):
     fecha_formalizacion:str
     I_G:str
 
-
 class ListadoContratos(BaseModel):
     contratos = List[Contrato]
 
@@ -62,24 +63,6 @@ class FormData(BaseModel):
 @app.post("/envio/")
 async def submit_form(data: FormData):
     return {"message": "Formulario recibido", "data": data}
-
-# Rutas para buscar dueño por DNI
-@app.get("/buscar_dueño/{dni_dueño}")
-async def buscar_dueño(dni_dueño: str):
-    if not os.path.exists(registroDueños_csv):
-        raise HTTPException(status_code = 404, detail = "No se encontró el archivo de registros de dueños")
-
-        # Cargamos los datos del CSV
-        registro_df = pd.read_csv(registroDueños_csv)
-
-        # Buscamos el dueño por DNI
-        dueño = registro_df[registro_df['dni_dueño'] = dni_dueño]
-
-        if dueño.empty:
-            raise HTTPException(status_code = 404, detail = "Dueño no encontrado")
-
-        # Convertimos el resultado a un diccionario y lo devolvemos
-        return dueño.to_dict(orient = 'records')[0]
 
 #CITAS
 class Cita(BaseModel):
@@ -122,21 +105,26 @@ def eliminar_cita(cita_id: int):
 
 class Dueño(BaseModel):
     nombre_dueño: str
-    telefono_dueño: Optional[str] = None
+    telefono_dueño: str
     email_dueño: str  
     dni_dueño: str
     direccion_dueño: str
 
-registroDueños_csv = "registroDueños.csv"
+class Animal(BaseModel):
+    nombre_animal: str
+    numero_chip_animal: str
+    especie_animal: str
+    fecha_nacimiento_animal: date
+    sexo: str
 
 #Registrar dueño
 @app.post("/alta_dueños/")
-async def alta_dueño(data: Dueño):
+async def alta_dueño(data: RegistroDueños):
     #validar datos
     try:
         #cargar csv
-        if os.path.exists(registroDueños_csv):
-            registro_df = pd.read_csv(registroDueños_csv)
+        if os.path.exists(registro_csv):
+            registro_df = pd.read_csv(registro_csv)
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
@@ -145,40 +133,65 @@ async def alta_dueño(data: Dueño):
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registroDueños_csv, index=False)
+        registro_df.to_csv(registro_csv, index=False)
         # Responder con un mensaje de éxito
-        return {"Dueño registrado correctamente"}
+        return {"message": "Dueño registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
-class Animal(BaseModel):
-    nombre_animal: str
-    chip_animal: str
-    especie_animal: str
-    fecha_nacimiento_animal: date
-    sexo: str
-
-registroAnimales_csv = "registroAnimales.csv"
 #Registrar animal
-
 @app.post("/alta_animal/")
-async def alta_animal(data: Animal):
+async def alta_animal(data: RegistroAnimal):
     #validar datos
     try:
         #cargar csv
-        if os.path.exists(registroAnimales_csv):
-            registro_df = pd.read_csv(registroAnimales_csv)
+        if os.path.exists(registro_csv):
+            registro_df = pd.read_csv(registro_csv)
         #crear csv
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_animal", "numero_chip_animal", "especie_animal", "fecha_nacimiento_animal",
-                "sexo_animal"
+                "nombre_animal", "numero_chip_animal", "especie_animal", 
+                "fecha_nacimiento_animal", "sexo_animal"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registroAnimales_csv, index=False)
+        registro_df.to_csv(registro_csv, index=False)
         # Responder con un mensaje de éxito
-        return {"Animal registrado correctamente"}
+        return {"message": "Dueño y Animal registrados correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+#Buscar dueño y animal
+@app.get("/buscar_registros/")
+def buscar_registros(nombre_dueño: Optional[str] = None):
+    if not os.path.exists(registro_csv):
+        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado")
+    
+    registro_df = pd.read_csv(registro_csv)
+    
+    if nombre_dueño:
+        # Filtrar registros por el nombre del dueño
+        resultados = registro_df[registro_df['nombre_dueño'].str.contains(nombre_dueño, case=False, na=False)]
+        if resultados.empty:
+            return {"message": "No se encontraron registros para ese dueño"}
+        return resultados.to_dict(orient="records")
+    
+    return registro_df.to_dict(orient="records")
 
+
+
+#Buscar dueño y animal
+@app.get("/buscar_registros/")
+def buscar_registros(nombre_dueño: Optional[str] = None):
+    if not os.path.exists(registro_csv):
+        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado")
+    
+    registro_df = pd.read_csv(registro_csv)
+    
+    if nombre_dueño:
+        # Filtrar registros por el nombre del dueño
+        resultados = registro_df[registro_df['nombre_dueño'].str.contains(nombre_dueño, case=False, na=False)]
+        if resultados.empty:
+            return {"message": "No se encontraron registros para ese dueño"}
+        return resultados.to_dict(orient="records")
+    
+    return registro_df.to_dict(orient="records")
