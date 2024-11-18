@@ -4,7 +4,6 @@ import requests
 st.title("Formulario para dar de alta dueños 🖥️🖥")
 url = "http://fastapi:8000/alta_dueños"
 
-
 # Guardar datos del dueño
 def guardar_datos_dueño(nombre_dueño, dni_dueño, telefono_dueño, direccion_dueño, email_dueño):
     payload = {
@@ -26,7 +25,6 @@ def guardar_datos_dueño(nombre_dueño, dni_dueño, telefono_dueño, direccion_d
     except requests.exceptions.RequestException as e:
         st.error(f"Error de conexión al enviar los datos: {e}")
 
-
 # Procesar formulario
 def procesar_formulario_dueños(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño):
     # Validar campos completos
@@ -35,7 +33,6 @@ def procesar_formulario_dueños(nombre_dueño, telefono_dueño, email_dueño, dn
         return
     # Guardar datos en CSV
     guardar_datos_dueño(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño)
-
 
 # Crear formulario
 def crear_formulario_dueños():
@@ -53,7 +50,6 @@ def crear_formulario_dueños():
 
         if submit_button:
             procesar_formulario_dueños(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño)
-
 
 # Llamar función crear formulario
 crear_formulario_dueños()
