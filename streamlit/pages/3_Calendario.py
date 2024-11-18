@@ -97,9 +97,7 @@ def popup():
                         st.session_state["events"].append({
                             "id": response["id"],
                             "title": tratamiento,
-                            "backgroundColor": "#FF6C6C",  # Color de fondo para eventos ocupados
-                            "borderColor": "#FF0000",      # Color opcional para bordes
-                            "textColor": "#FFFFFF",        # Texto blanco
+                            "color": "#FF6C6C",  # Color de fondo del evento
                             "start": st.session_state["time_inicial"],
                             "end": st.session_state["time_final"],
                         })
@@ -110,7 +108,7 @@ def popup():
             st.error("No se ha seleccionado una fecha.")
 
 mode = st.selectbox(
-    "Calendar Mode:",
+    "Calendar Mode: ",
     (
         "daygrid",
         "timegrid",
