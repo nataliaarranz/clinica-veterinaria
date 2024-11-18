@@ -123,17 +123,7 @@ mode = st.selectbox(
     ),
 )
 
-events = [
-    {
-        "title": "Consulta Perrito",
-        "backgroundColor": "#FF6C6C",
-        "borderColor": "#FF0000",
-        "textColor": "#FFFFFF",
-        "start": "2024-11-03",
-        "end": "2024-11-05",
-        "resourceId": "a",
-    },
-]
+events = st.session_state.get("events", [])
 
 calendar_resources = [
     {"id": "a", "building": "Clinica 1", "title": "Consulta A"},
@@ -153,7 +143,7 @@ calendar_options = {
 }
 
 state = calendar(
-    events=st.session_state.get("events", events),
+    events=events,
     options=calendar_options,
     key='timegrid',
 )
