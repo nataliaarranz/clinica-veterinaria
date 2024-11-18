@@ -45,22 +45,29 @@ def get_animales():
             return []
     except Exception as e:
         return []
-
+    
 @st.dialog("Registrar nueva cita")
 def popup():
     st.write('Fecha de la cita:')
     with st.form("form_nueva_cita"):
         animales = get_animales()
-        animales_nombre = [animales["nombre"] for animal in animales] if animales else ["No hay animales registrados."]
+        animales_nombre = [animal["nombre_animal"] for animal in animales] if animales else ["No hay animales registrados."]
         nombre_animal = st.selectbox("Nombre animal: ", animales_nombre)
+        
         dueños = get_dueños()
-        dueños_nombre = [dueños["nombre"] for dueño in dueños] if dueños else ["No hay dueños registrados."]
+        dueños_nombre = [dueño["nombre_dueño"] for dueño in dueños] if dueños else ["No hay dueños registrados."]
         nombre_dueño = st.selectbox("Nombre dueño: ", dueños_nombre)
+        
         tratamiento = st.text_input("Tipo de cita:")
         submitted = st.form_submit_button("Registrar cita")
 
     if submitted:
-            if "time_inicial" in st.session_state:
+        if "time_inicial" in st.session_state:
+            if nombre_animal == "No hay animales registrados." or nombre_dueño == "No hay dueños registrados.":
+                st.error("Por favor, asegúrate de que hay animales y dueños registrados.")
+            elif not tratamiento:
+                st.error("El campo 'Tipo de cita' es obligatorio.")
+            else:
                 data = {
                     "nombre_animal": nombre_animal,
                     "nombre_dueño": nombre_dueño,
@@ -68,6 +75,7 @@ def popup():
                     "fecha_inicio": st.session_state["time_inicial"],
                 }
                 response = send(data)
+        
                 if isinstance(response, dict) and "id" in response:
                     st.session_state["events"].append({
                         "id": response["id"],
@@ -79,8 +87,8 @@ def popup():
                     st.success("Registrado con éxito, puede cerrar!")
                 else:
                     st.error("No se registró, status_code: {}".format(response))
-            else:
-                st.error("No se ha seleccionado una fecha.")
+        else:
+            st.error("No se ha seleccionado una fecha.")
 
 mode = st.selectbox(
     "Calendar Mode:",
@@ -111,8 +119,6 @@ calendar_resources = [
     {"id": "c", "building": "Clinica 1", "title": "Consulta B"},
 ]
 
-
-
 calendar_options = {
     "editable": True,
     "navLinks": True,
@@ -124,6 +130,8 @@ calendar_options = {
     "slotMinTime": "8:00:00",
     "slotMaxTime": "18:00:00",
 }
+
+
 
 state = calendar(
     events=st.session_state.get("events", events),
