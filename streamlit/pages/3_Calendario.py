@@ -29,10 +29,12 @@ def get_dueños():
     try:
         response = requests.get(dueños_backend)
         if response.status_code == 200:
-            return response.json()  # Suponemos que devuelve una lista de dueños
+            return response.json()
         else:
+            st.error(f"Error al obtener dueños: {response.status_code} - {response.text}")
             return []
     except Exception as e:
+        st.error(f"Excepción al obtener dueños: {e}")
         return []
 
 # Función para obtener los animales registrados
@@ -40,10 +42,12 @@ def get_animales():
     try:
         response = requests.get(animales_backend)
         if response.status_code == 200:
-            return response.json()  # Suponemos que devuelve una lista de dueños
+            return response.json()
         else:
+            st.error(f"Error al obtener animales: {response.status_code} - {response.text}")
             return []
     except Exception as e:
+        st.error(f"Excepción al obtener animales: {e}")
         return []
     
 @st.dialog("Registrar nueva cita")
