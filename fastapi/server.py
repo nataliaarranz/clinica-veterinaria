@@ -63,6 +63,24 @@ class FormData(BaseModel):
 async def submit_form(data: FormData):
     return {"message": "Formulario recibido", "data": data}
 
+# Rutas para buscar dueño por DNI
+@app.get("/buscar_dueño/{dni_dueño}")
+async def buscar_dueño(dni_dueño: str):
+    if not os.path.exists(registroDueños_csv):
+        raise HTTPException(status_code = 404, detail = "No se encontró el archivo de registros de dueños")
+
+        # Cargamos los datos del CSV
+        registro_df = pd.read_csv(registroDueños_csv)
+
+        # Buscamos el dueño por DNI
+        dueño = registro_df[registro_df['dni_dueño'] = dni_dueño]
+
+        if dueño.empty:
+            raise HTTPException(status_code = 404, detail = "Dueño no encontrado")
+
+        # Convertimos el resultado a un diccionario y lo devolvemos
+        return dueño.to_dict(orient = 'records')[0]
+
 #CITAS
 class Cita(BaseModel):
     id: Optional[int]
@@ -163,3 +181,4 @@ async def alta_animal(data: Animal):
         return {"Animal registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+
