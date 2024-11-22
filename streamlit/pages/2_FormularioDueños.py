@@ -5,13 +5,13 @@ st.title("Formulario para dar de alta dueños 🖥️🖥")
 url = "http://fastapi:8000/alta_dueños"
 
 # Guardar datos del dueño
-def guardar_datos_dueño(nombre_dueño, dni_dueño, telefono_dueño, direccion_dueño, email_dueño):
+def guardar_datos_dueño(nombre_dueño, telefono_dueño, email_dueño, dni_dueño, direccion_dueño):
     payload = {
         "nombre_dueño": nombre_dueño,
-        "dni_dueño": dni_dueño,
         "telefono_dueño": telefono_dueño,
-        "direccion_dueño": direccion_dueño,
-        "email_dueño": email_dueño
+        "email_dueño": email_dueño,
+        "dni_dueño": dni_dueño,
+        "direccion_dueño": direccion_dueño
     }
     # Enviar los datos al microservicio
     try:

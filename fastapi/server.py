@@ -24,7 +24,7 @@ class Animal(BaseModel):
     nombre_animal: str
     chip_animal: str
     especie_animal: str
-    fecha_nacimiento_animal: date
+    nacimiento_animal: date
     sexo: str
 
 class Cita(BaseModel):
@@ -155,7 +155,7 @@ async def alta_animal(data: Animal):
             registro_df = pd.read_csv(registroAnimales_csv)
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_animal", "chip_animal", "especie_animal", "fecha_nacimiento_animal",
+                "nombre_animal", "chip_animal", "especie_animal", "nacimiento_animal",
                 "sexo"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
