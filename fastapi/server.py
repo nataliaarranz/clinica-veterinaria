@@ -95,14 +95,47 @@ async def alta_dueño(data: Dueño):
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
 #Dar de baja dueño
-@app.delete("/baja_dueños/{dni_dueño}")
-async def baja_dueño(dni_dueño: str):
-    #Buscar dueño a dar de baja
-    for index, registro in enumerate (registroDueños_csv):
-        if registro["dni_dueño"] == dni_dueño:
-            eliminado = registroDueños_csv.pop(index)
-            return {"Dueño eliminado correctamente"}
-    raise HTTPException(status_code=404, detail="Dueño no encontrado")
+@app.delete("/dar_baja_dueño/{dni_dueño}")
+async def dar_baja_dueño(dni_dueño: str):
+    try:
+        #Verificar si existe el archivo
+        if not os.path.exists(registroDueños_csv):
+            raise HTTPException(status_code=404, detail="No se encontró el archivo.")
+        # Cargamos los datos del CSV 
+        registro_df = pd.read_csv(registroDueños_csv)
+        #Buscar dueño a dar de baja
+        if "dni_dueño" not in registro_df.columns:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        registro_df["dni_dueño"] = registro_df["dni_dueño"].astype(str).str.strip()
+        dni_dueño = dni_dueño.strip()  # Limpiar cualquier espacio extra del DNI proporcionado
+        #Verificar si existe el dueño
+        if dni_dueño not in registro_df["dni_dueño"].values:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        #Eliminar dueño de la lista
+        registro_df = registro_df[registro_df["dni_dueño"] != dni_dueño]
+        #Actualizar el archivo CSV
+        registro_df.to_csv(registroDueños_csv, index=False)
+        return {"message": f"Dueño con DNI {dni_dueño} eliminado correctamente"}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=500, detail="El archivo de registros está vacío o corrupto.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
+
+# Buscar dueño por DNI 
+@app.get("/buscar_dueño/{dni_dueño}") 
+async def buscar_dueño(dni_dueño: str): 
+    if not os.path.exists(registroDueños_csv):
+        raise HTTPException(status_code = 404, detail = f"No se encontró el archivo de registros de dueños:{e}") 
+    # Cargamos los datos del CSV 
+    registro_df = pd.read_csv(registroDueños_csv) 
+    # Buscamos el dueño por DNI 
+    dueño = registro_df[registro_df['dni_dueño'] == dni_dueño]  
+    if dueño.empty: 
+        raise HTTPException(status_code = 404, detail = "Dueño no encontrado") 
+    # Convertimos el resultado a un diccionario y lo devolvemos 
+    return dueño.to_dict(orient = 'records')[0]
 
 
 # Endpoints para animales
@@ -131,6 +164,30 @@ async def alta_animal(data: Animal):
         return {"message": "Animal registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+
+#Dar de baja animal
+@app.delete("/dar_baja_animal/{chip_animal}")
+async def dar_baja_animal(chip_animal: str):
+    try:
+        #Verificar si existe el archivo
+        if not os.path.exists(registroAnimales_csv):
+            raise HTTPException(status_code=404, detail="No se encontró el archivo.")
+        # Cargamos los datos del CSV 
+        registro_df = pd.read_csv(registroAnimales_csv)
+        registro_df["chip_animal"] = registro_df["chip_animal"].astype(str)
+        chip_animal = chip_animal.strip()  # Limpiar cualquier espacio extra del chip proporcionado
+        #Buscar animal a dar de baja
+        if chip_animal not in registro_df["chip_animal"].values:
+            raise HTTPException(status_code=404, detail="Animal no encontrado.")
+        
+        #Eliminar animal de la lista
+        registro_df = registro_df[registro_df["chip_animal"] != chip_animal]
+        #Actualizar el archivo CSV
+        registro_df.to_csv(registroAnimales_csv, index=False)
+        return {"message": f"Animal con chip {chip_animal} eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Animal no encontrado")
+
 
 #Dar de baja animal
 @app.delete("/baja_animal/{chip_animal}")

@@ -2,13 +2,14 @@ import streamlit as st
 import requests
 
 st.title("Gestión de baja Dueños o Animales 🖥️🖥")
-url = "http://fastapi:8000/baja"
-
+backend = "http://fastapi:8000/baja"
+dueños_backend = "http://fastapi:8000/duenos"
+animales_backend = "http://fastapi:8000/animales"
 
 #Dar de baja DUEÑO
 def dar_baja_dueño(dni_dueño):
     try:
-        response = requests.delete(f"{url}/{dni_dueño}")
+        response = requests.delete(f"{dueños_backend}/{dni_dueño}")
         if response.status_code == 200:
             st.success("Se ha dado de baja al dueño correctamente")
             #Respuesta de microservicio
@@ -24,20 +25,21 @@ def dar_baja_dueño(dni_dueño):
 #Formulario para dar de baja dueño
 def crear_formulario_baja_dueños():
     st.title("Baja de Dueños 🐾")
-    
     with st.form("dar_baja_dueño"):
-        st.subheader("Ingrese el DNI del dueño que desea dar de baja")
-        dni_dueño = st.text_input("DNI del dueño", max_chars= 10)
+        dni_dueño = st.text_input("Ingrese el DNI del dueño que desea dar de baja", max_chars=10)
+        st.write(f"DNI del dueño: {dni_dueño}")
         submit_button = st.form_submit_button(label="Dar de baja")
-        
         if submit_button:
-            dar_baja_dueño(dni_dueño)
+            if not dni_dueño.strip():
+                st.error("El campo DNI no puede estar vacío")
+            else:
+                dar_baja_dueño(dni_dueño)
 
 
 #Dar de baja ANIMAL
 def dar_baja_animal(chip_animal):
     try:
-        response = requests.delete(f"{url}/{chip_animal}")
+        response = requests.delete(f"{animales_backend}/{chip_animal}")
         if response.status_code == 200:
             st.success("Se ha dado de baja al animal correctamente")
             #Respuesta de microservicio
@@ -53,13 +55,13 @@ def dar_baja_animal(chip_animal):
 def crear_formulario_baja_animal():
     st.title("Baja de Animales 🐾")
     with st.form("dar_baja_animal"):
-        st.subheader("Ingrese el chip del animal que desea dar de baja")
-        chip_animal = st.text_input("Chip del animal", max_chars= 10)
+        chip_animal = st.text_input("Ingrese el chip del animal que desea dar de baja", max_chars = 10)
         submit_button = st.form_submit_button(label="Dar de baja")
-        
         if submit_button:
-            dar_baja_animal(chip_animal)
-
+            if not chip_animal.strip():
+                st.error("El campo chip no puede estar vacío")
+            else:
+                dar_baja_animal(chip_animal)
 
 #Mostrar formularios
 st.sidebar.title("Opciones")
