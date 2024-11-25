@@ -76,7 +76,7 @@ registroAnimales_csv = "registroAnimales.csv"
 @app.get("/retrieve_data")
 async def retrieve_data():
     try:
-        if os.path.exists("contratos_incritos_simplificado_2023.csv"):  # Cambia aquí el nombre del archivo
+        if os.path.exists("contratos_incritos_simplificado_2023.csv"):
             contratos_df = pd.read_csv("contratos_incritos_simplificado_2023.csv")
             contratos = contratos_df.to_dict(orient="records")
             return {"contratos": contratos}
