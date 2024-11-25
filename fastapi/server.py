@@ -8,6 +8,11 @@ from typing import List, Optional
 from datetime import datetime, date
 from pydantic import BaseModel as PydanticBaseModel
 
+#NUEVO PARA ARREGLAR DASHBOARD
+app = FastAPI()
+
+
+
 class BaseModel(PydanticBaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -66,6 +71,11 @@ app = FastAPI(
 # Archivos CSV
 registroDueños_csv = "registroDueños.csv"
 registroAnimales_csv = "registroAnimales.csv"
+
+#NUEVO PARA ARREGLAR DASHBOARD
+@app.get("/retrieve_data")
+async def retrieve_data():
+    return {"contratos": []}  # Cambia esto por tu lógica real
 
 # Endpoints para dueños
 @app.get("/dueños/")
