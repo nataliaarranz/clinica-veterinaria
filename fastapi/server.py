@@ -124,21 +124,6 @@ async def dar_baja_dueño(dni_dueño: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
     
 
-#NUEVO PARA EL DASHBOARD
-@app.get("/retrieve_data", response_model=ListadoContratos)
-def retrieve_data():
-    try:
-        # Supongamos que tienes un archivo CSV con los contratos
-        if os.path.exists("contratos.csv"):
-            contratos_df = pd.read_csv("contratos.csv")
-            contratos = contratos_df.to_dict(orient="records")
-            return ListadoContratos(contratos=contratos)
-        else:
-            raise HTTPException(status_code=404, detail="No hay contratos registrados")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al recuperar los datos: {e}")
-    
-    
 
 # Buscar dueño por DNI 
 @app.get("/buscar_dueño/{dni_dueño}") 
