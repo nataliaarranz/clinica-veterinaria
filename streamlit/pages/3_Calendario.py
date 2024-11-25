@@ -66,7 +66,22 @@ def popup():
         dueños_nombre = [dueño["nombre_dueño"] for dueño in dueños] if dueños else ["No hay dueños registrados."]
         nombre_dueño = st.selectbox("Nombre dueño: ", dueños_nombre)
         
-        tratamiento = st.text_input("Tipo de cita:")
+        # Menú desplegable para seleccionar el tratamiento
+        tratamientos = [
+            "Análisis",
+            "Vacunación",
+            "Desparasitación",
+            "Revisión general",
+            "Revisión cardiología",
+            "Revisión cutánea",
+            "Revisión broncología",
+            "Ecografías",
+            "Limpieza bucal",
+            "Extracción de piezas dentales",
+            "Cirugía"
+        ]
+        tratamiento = st.selectbox("Tipo de cita:", tratamientos)
+        
         submitted = st.form_submit_button("Registrar cita")
 
     if submitted:

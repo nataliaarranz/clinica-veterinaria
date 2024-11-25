@@ -36,16 +36,23 @@ def obtener_animales():
         return []
 
 # Función para mostrar la factura
-def generar_factura(nombre_dueño, nombre_animal, tratamiento, precio):
+def generar_factura(nombre_dueño, nombre_animal, tratamiento, precio_sin_iva, precio_con_iva):
     st.subheader("Factura de Consulta Veterinaria")
     st.write(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     st.write(f"Nombre del Dueño: {nombre_dueño}")
     st.write(f"Nombre del Animal: {nombre_animal}")
     
     st.write("Tratamiento realizado:")
-    st.write(f"- {tratamiento} - {precio}€")
+    st.write(f"- {tratamiento} - {precio_sin_iva:.2f}€ (sin IVA)")
+    st.write(f"- {tratamiento} - {precio_con_iva:.2f}€ (con IVA)")
     
-    st.write(f"**Total a Pagar: {precio}€**")
+    st.write(f"**Total a Pagar: {precio_con_iva:.2f}€**")
+    
+    # Información del centro veterinario
+    st.write(f"**Información del Centro**")
+    st.write("Clinica Veterinaria Cuatro Patas")
+    st.write("Ubicación: Paseo de la Castellana, 14")
+    st.write("Teléfono: 912457890")
 
 # Función principal para el registro de consultas
 def registrar_consulta():
@@ -80,20 +87,17 @@ def registrar_consulta():
 
     # Selección del tratamiento
     tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(tratamientos.keys()))
-    precio = tratamientos[tratamiento_seleccionado]
+    precio_sin_iva = tratamientos[tratamiento_seleccionado]
 
     # Calcular precio con IVA (suponiendo un IVA del 21%)
     iva = 0.21
-    precio_con_iva = precio * (1 + iva)
+    precio_con_iva = precio_sin_iva * (1 + iva)
 
-    # Mostrar precio y precio con IVA
-    st.write(f"Precio del tratamiento: {precio}€")
-    st.write(f"Precio con IVA (21%): {precio_con_iva:.2f}€")
 
     # Botón para generar la factura
     if st.button("Generar Factura"):
         if nombre_dueño and nombre_animal and tratamiento_seleccionado:
-            generar_factura(nombre_dueño, nombre_animal, tratamiento_seleccionado, precio_con_iva)
+            generar_factura(nombre_dueño, nombre_animal, tratamiento_seleccionado, precio_sin_iva, precio_con_iva)
         else:
             st.error("Por favor, completa todos los campos.")
 
