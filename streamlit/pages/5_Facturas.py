@@ -4,8 +4,8 @@ from datetime import datetime
 
 # URL del microservicio FastAPI
 tratamientos_url = "http://fastapi:8000/tratamientos"
-animales_url = "http://fastapi:8000/animales"
-dueños_url = "http://fastapi:8000/dueños"
+animales_backend = "http://fastapi:8000/animales"
+dueños_backend = "http://fastapi:8000/dueños"
 registro_consulta_url = "http://fastapi:8000/consultas"
 
 # Título de la página
@@ -27,7 +27,7 @@ def obtener_tratamientos():
 # Función para obtener los detalles del dueño desde el backend
 def obtener_dueños():
     try:
-        response = requests.get(dueños_url)
+        response = requests.get(dueños_backend)
         if response.status_code == 200:
             return response.json()
         else:
@@ -40,7 +40,7 @@ def obtener_dueños():
 # Función para obtener los detalles del animal desde el backend
 def obtener_animales():
     try:
-        response = requests.get(animales_url)
+        response = requests.get(animales_backend)
         if response.status_code == 200:
             return response.json()
         else:
@@ -52,7 +52,6 @@ def obtener_animales():
 
 # Función para registrar la consulta y generar la factura
 def registrar_consulta_dueño_animal(nombre_dueño, nombre_animal, tratamientos_seleccionados):
-    # Crear el cuerpo de la consulta
     consulta_data = {
         "nombre_dueño": nombre_dueño,
         "nombre_animal": nombre_animal,
@@ -112,7 +111,7 @@ def registrar_consulta():
         if st.checkbox(f"{tratamiento['nombre']} ({tratamiento['precio']}€)", key=tratamiento['nombre']):
             tratamientos_seleccionados.append(tratamiento)
     
-    # Botón para generar la factura
+        # Botón para generar la factura
     if st.button("Generar Factura"):
         if nombre_dueño and nombre_animal and tratamientos_seleccionados:
             # Calcular el total
