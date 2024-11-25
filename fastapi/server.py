@@ -75,7 +75,12 @@ registroAnimales_csv = "registroAnimales.csv"
 #NUEVO PARA ARREGLAR DASHBOARD
 @app.get("/retrieve_data")
 async def retrieve_data():
-    return {"contratos": []}  # Cambia esto por tu lógica real
+    if os.path.exists("registroContratos.csv"):  # Cambia esto por el nombre de tu archivo
+        contratos_df = pd.read_csv("registroContratos.csv")
+        contratos = contratos_df.to_dict(orient="records")
+        return {"contratos": contratos}
+    else:
+        raise HTTPException(status_code=404, detail="No se encontraron contratos registrados")
 
 # Endpoints para dueños
 @app.get("/dueños/")
