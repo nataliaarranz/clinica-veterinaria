@@ -58,21 +58,44 @@ def registrar_consulta():
     if not dueños or not animales:
         st.error("No se han podido obtener los datos necesarios.")
         return
-    
+
     # Selección de dueño y animal
     nombre_dueño = st.selectbox("Selecciona el dueño:", [dueño["nombre_dueño"] for dueño in dueños])
     nombre_animal = st.selectbox("Selecciona el animal:", [animal["nombre_animal"] for animal in animales])
 
-    # Selección del tratamiento (suponiendo que es el tipo de cita)
-    tratamiento = st.text_input("Tipo de tratamiento:")
-    precio = st.number_input("Precio del tratamiento:", min_value=0.0, format="%.2f")
+    # Definición de tratamientos y precios
+    tratamientos = {
+        "Análisis": 15,
+        "Vacunación": 15,
+        "Desparasitación": 25,
+        "Revisión general": 30,
+        "Revisión cardiología": 55,
+        "Revisión cutánea": 45,
+        "Revisión broncología": 35,
+        "Ecografías": 50,
+        "Limpieza bucal": 50,
+        "Extracción de piezas dentales": 70,
+        "Cirugía": 250
+    }
+
+    # Selección del tratamiento
+    tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(tratamientos.keys()))
+    precio = tratamientos[tratamiento_seleccionado]
+
+    # Calcular precio con IVA (suponiendo un IVA del 21%)
+    iva = 0.21
+    precio_con_iva = precio * (1 + iva)
+
+    # Mostrar precio y precio con IVA
+    st.write(f"Precio del tratamiento: {precio}€")
+    st.write(f"Precio con IVA (21%): {precio_con_iva:.2f}€")
 
     # Botón para generar la factura
     if st.button("Generar Factura"):
-        if nombre_dueño and nombre_animal and tratamiento and precio > 0:
-            generar_factura(nombre_dueño, nombre_animal, tratamiento, precio)
+        if nombre_dueño and nombre_animal and tratamiento_seleccionado:
+            generar_factura(nombre_dueño, nombre_animal, tratamiento_seleccionado, precio_con_iva)
         else:
-            st.error("Por favor, completa todos los campos y asegúrate de que el precio es mayor que cero.")
+            st.error("Por favor, completa todos los campos.")
 
 # Llamar a la función para registrar la consulta y generar la factura
 registrar_consulta()
