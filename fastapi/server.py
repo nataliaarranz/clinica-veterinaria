@@ -219,6 +219,21 @@ async def baja_animal(chip_animal: str):
             return {"Animal eliminado correctamente"}
     raise HTTPException(status_code=404, detail="Animal no encontrado")
 
+# Buscar animal por chip 
+@app.get("/buscar_animal/{chip_animal}") 
+async def buscar_animal(chip_animal: str): 
+    if not os.path.exists(registroAnimales_csv):
+        raise HTTPException(status_code = 404, detail = f"No se encontró el archivo de registros de animales:{e}") 
+    # Cargamos los datos del CSV 
+    registro_df = pd.read_csv(registroAnimales_csv) 
+    # Buscamos el animal por chip 
+    animal = registro_df[registro_df['chip_animal'] == chip_animal]  
+    if animal.empty: 
+        raise HTTPException(status_code = 404, detail = "Animal no encontrado.") 
+    # Convertimos el resultado a un diccionario y lo devolvemos 
+    return animal.to_dict(orient = 'records')[0]
+
+
 
 # Endpoints para citas (se mantiene tu implementación actual)
 citas_db = []
