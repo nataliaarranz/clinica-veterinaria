@@ -171,38 +171,61 @@ async def alta_animal(data: Animal):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
+
+
+# Buscar animal por chip  NUEVO BUSCAR -----------------------------
+@app.get("/animales/{chip_animal}")
+async def buscar_animal(chip_animal: str):
+    try:
+        # Verificar si el archivo existe
+        if not os.path.exists(registroAnimales_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de animales no encontrado.")
+        
+        # Leer el archivo CSV
+        registro_df = pd.read_csv(registroAnimales_csv)
+        
+        # Asegurarse de que la columna chip_animal sea de tipo string
+        registro_df['chip_animal'] = registro_df['chip_animal'].astype(str)
+
+        # Imprimir para depuración
+        print("Chips disponibles:", registro_df['chip_animal'].tolist())
+        
+        # Buscar el animal por chip, eliminando espacios en blanco
+        animal = registro_df[registro_df['chip_animal'].str.strip() == chip_animal.strip()]
+        
+        if animal.empty:
+            raise HTTPException(status_code=404, detail="Animal no encontrado.")
+        
+        return animal.to_dict(orient='records')[0]
+    
+    except Exception as e:
+        print(f"Error inesperado al buscar animal: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
+
+
+#NUEVO DELETE -------------------------------
 @app.delete("/animales/{chip_animal}")
 def eliminar_animal(chip_animal: str):
     if os.path.exists(registroAnimales_csv):
         registro_df = pd.read_csv(registroAnimales_csv)
         
+        # Asegurarse de que la columna chip_animal sea de tipo string
+        registro_df['chip_animal'] = registro_df['chip_animal'].astype(str)
+
+        # Imprimir para depuración
+        print("Chips disponibles:", registro_df['chip_animal'].tolist())
+        
         # Verificar si el animal existe
-        if chip_animal not in registro_df['chip_animal'].values:  # Verifica si el chip_animal existe
+        if chip_animal.strip() not in registro_df['chip_animal'].values:
             raise HTTPException(status_code=404, detail="Animal no encontrado")
         
         # Eliminar el animal
-        registro_df = registro_df[registro_df['chip_animal'] != chip_animal]
+        registro_df = registro_df[registro_df['chip_animal'] != chip_animal.strip()]
         registro_df.to_csv(registroAnimales_csv, index=False)
         
         return {"detail": "Animal eliminado exitosamente"}
     else:
         raise HTTPException(status_code=404, detail="No hay animales registrados")
-
-# Buscar animal por chip 
-@app.get("/animales/{chip_animal}")
-async def buscar_animal(chip_animal: str):
-    try:
-        if not os.path.exists(registroAnimales_csv):
-            raise HTTPException(status_code=404, detail="Archivo de registros de animales no encontrado.")
-        registro_df = pd.read_csv(registroAnimales_csv)
-        animal = registro_df[registro_df['chip_animal'].str.strip() == chip_animal.strip()]
-        if animal.empty:
-            raise HTTPException(status_code=404, detail="Animal no encontrado.")
-        return animal.to_dict(orient='records')[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
-
-
 
 # Endpoints para citas (se mantiene tu implementación actual)
 citas_db = []
