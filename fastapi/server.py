@@ -93,7 +93,7 @@ def get_duenos():
     else:
         raise HTTPException(status_code=404, detail="No hay dueños registrados")
 
-@app.post("/alta_dueños/")
+@app.post("/alta_duenos/")
 async def alta_dueno(data: Dueno):
     try:
         if os.path.exists(registroDuenos_csv):
