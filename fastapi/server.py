@@ -171,39 +171,22 @@ async def alta_animal(data: Animal):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
-#Dar de baja animal
-@app.delete("/dar_baja_animal/{chip_animal}")
-async def dar_baja_animal(chip_animal: str):
-    try:
-        #Verificar si existe el archivo
-        if not os.path.exists(registroAnimales_csv):
-            raise HTTPException(status_code=404, detail="No se encontró el archivo.")
-        # Cargamos los datos del CSV 
+@app.delete("/animales/{chip_animal}")
+def eliminar_animal(chip_animal: str):
+    if os.path.exists(registroAnimales_csv):
         registro_df = pd.read_csv(registroAnimales_csv)
-        registro_df["chip_animal"] = registro_df["chip_animal"].astype(str)
-        chip_animal = chip_animal.strip()  # Limpiar cualquier espacio extra del chip proporcionado
-        #Buscar animal a dar de baja
-        if chip_animal not in registro_df["chip_animal"].values:
-            raise HTTPException(status_code=404, detail="Animal no encontrado.")
         
-        #Eliminar animal de la lista
-        registro_df = registro_df[registro_df["chip_animal"] != chip_animal]
-        #Actualizar el archivo CSV
+        # Verificar si el animal existe
+        if chip_animal not in registro_df['chip_animal'].values:  # Verifica si el chip_animal existe
+            raise HTTPException(status_code=404, detail="Animal no encontrado")
+        
+        # Eliminar el animal
+        registro_df = registro_df[registro_df['chip_animal'] != chip_animal]
         registro_df.to_csv(registroAnimales_csv, index=False)
-        return {"message": f"Animal con chip {chip_animal} eliminado correctamente"}
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Animal no encontrado")
-
-
-#Dar de baja animal
-@app.delete("/baja_animal/{chip_animal}")
-async def baja_animal(chip_animal: str):
-    #Buscar animal a dar de baja
-    for index, registro in enumerate (registroAnimales_csv):
-        if registro["chip_animal"] == chip_animal:
-            eliminado = registroAnimales_csv.pop(index)
-            return {"Animal eliminado correctamente"}
-    raise HTTPException(status_code=404, detail="Animal no encontrado")
+        
+        return {"detail": "Animal eliminado exitosamente"}
+    else:
+        raise HTTPException(status_code=404, detail="No hay animales registrados")
 
 # Buscar animal por chip 
 @app.get("/animales/{chip_animal}")

@@ -47,7 +47,7 @@ def dar_baja_animal(chip_animal):
 def crear_formulario_baja_animal():
     st.title("Baja de Animales 🐾")
     with st.form("dar_baja_animal"):
-        chip_animal = st.text_input("Chip del animal a dar de baja", max_chars=10)
+        chip_animal = st.text_input("Chip del animal a dar de baja", max_chars=15)
         submit_button = st.form_submit_button(label="Dar de baja")
         if submit_button:
             if not chip_animal.strip():
