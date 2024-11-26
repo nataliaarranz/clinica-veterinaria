@@ -111,35 +111,24 @@ async def alta_dueno(data: Dueno):
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
 #Dar de baja dueño
-@app.delete("/dar_baja_dueno/{dni_dueno}")
+@app.delete("/duenos/{dni_dueno}")
 async def dar_baja_dueno(dni_dueno: str):
     try:
-        #Verificar si existe el archivo
         if not os.path.exists(registroDuenos_csv):
-            raise HTTPException(status_code=404, detail="No se encontró el archivo.")
-        # Cargamos los datos del CSV 
+            raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
         registro_df = pd.read_csv(registroDuenos_csv)
-        #Buscar dueño a dar de baja
-        if "dni_dueno" not in registro_df.columns:
-            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
         registro_df["dni_dueno"] = registro_df["dni_dueno"].astype(str).str.strip()
-        dni_dueno = dni_dueno.strip()  # Limpiar cualquier espacio extra del DNI proporcionado
-        #Verificar si existe el dueño
-        if dni_dueno not in registro_df["dni_dueno"].values:
-            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
-        #Eliminar dueño de la lista
-        registro_df = registro_df[registro_df["dni_dueno"] != dni_dueno]
-        #Actualizar el archivo CSV
+        if dni_dueno.strip() not in registro_df["dni_dueno"].values:
+            raise HTTPException(status_code=404, detail="Dueño con DNI especificado no encontrado.")
+        registro_df = registro_df[registro_df["dni_dueno"] != dni_dueno.strip()]
         registro_df.to_csv(registroDuenos_csv, index=False)
-        return {"message": f"Dueno con DNI {dni_dueno} eliminado correctamente"}
+        return {"message": f"Dueño con DNI {dni_dueno} eliminado correctamente"}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
     except pd.errors.EmptyDataError:
         raise HTTPException(status_code=500, detail="El archivo de registros está vacío o corrupto.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
-    
-
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")    
 
 # Buscar dueño por DNI 
 @app.get("/buscar_dueno/{dni_dueno}") 
