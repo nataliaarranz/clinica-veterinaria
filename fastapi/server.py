@@ -71,17 +71,25 @@ registroDuenos_csv = "registroDuenos.csv"
 registroAnimales_csv = "registroAnimales.csv"
 
 #NUEVO PARA ARREGLAR DASHBOARD
-@app.get("/retrieve_data")
-async def retrieve_data():
-    try:
-        if os.path.exists("contratos_incritos_simplificado_2023.csv"):
-            contratos_df = pd.read_csv("contratos_incritos_simplificado_2023.csv")
-            contratos = contratos_df.to_dict(orient="records")
-            return {"contratos": contratos}
-        else:
-            raise HTTPException(status_code=404, detail="No se encontraron contratos registrados")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al leer el archivo: {str(e)}")
+@app.get("/retrieve_data/")
+def retrieve_data ():
+    todosmisdatos = pd.read_csv('./contratos_inscritos_simplificado_2023.csv',sep=';')
+    todosmisdatos = todosmisdatos.fillna(0)
+    todosmisdatosdict = todosmisdatos.to_dict(orient='records')
+    listado = ListadoContratos()
+    listado.contratos = todosmisdatosdict
+    return listado
+
+class FormData(BaseModel):
+    date: str
+    description: str
+    option: str
+    amount: float
+
+@app.post("/envio/")
+async def submit_form(data: FormData):
+    return {"message": "Formulario recibido", "data": data}
+#HASTA AQUI LO NUEVOOOOOOOOOO
 
 # Endpoints para dueños
 @app.get("/duenos/")
