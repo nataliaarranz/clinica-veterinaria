@@ -28,7 +28,7 @@ def send(data, method="POST", cita_id=None):
     except Exception as e:
         return str(e)
 
-# Funcion para obtener los duenos registrados
+# Función para obtener los dueños registrados
 def get_duenos():
     try:
         response = requests.get(duenos_backend)
@@ -38,10 +38,10 @@ def get_duenos():
             st.error(f"Error al obtener dueños: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        st.error(f"Excepcion al obtener dueños: {e}")
+        st.error(f"Excepción al obtener dueños: {e}")
         return []
 
-# Funcion para obtener los animales registrados
+# Función para obtener los animales registrados
 def get_animales():
     try:
         response = requests.get(animales_backend)
@@ -51,7 +51,7 @@ def get_animales():
             st.error(f"Error al obtener animales: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        st.error(f"Excepcion al obtener animales: {e}")
+        st.error(f"Excepción al obtener animales: {e}")
         return []
 
 @st.dialog("Registrar nueva cita")
@@ -66,7 +66,7 @@ def popup():
         duenos_nombre = [dueno["nombre_dueno"] for dueno in duenos] if duenos else ["No hay dueños registrados."]
         nombre_dueno = st.selectbox("Nombre dueño: ", duenos_nombre)
         
-        # Menu desplegable para seleccionar el tratamiento
+        # Menú desplegable para seleccionar el tratamiento
         tratamientos = [
             "Analisis",
             "Vacunacion",
@@ -98,27 +98,30 @@ def popup():
                     for event in st.session_state["events"]
                 )
                 if conflict:
-                    st.error("El rango de fechas ya está ocupado. Selecciona otra hora.")
+                                        st.error("El rango de fechas ya está ocupado. Selecciona otra hora.")
                 else:
                     data = {
                         "nombre_animal": nombre_animal,
                         "nombre_dueno": nombre_dueno,
                         "tratamiento": tratamiento,
                         "fecha_inicio": st.session_state["time_inicial"],
-                        "fecha_fin": st.session_state["time_final"]
+                        "fecha_fin": st.session_state["time_final"],
+                        "backgroundColor": "#FF4B4B",  # Color de fondo del evento
+                        "borderColor": "#FF4B4B"       # Color del borde del evento
                     }
                     response = send(data)
                     if isinstance(response, dict) and "id" in response:
                         st.session_state["events"].append({
                             "id": response["id"],
                             "title": tratamiento,
-                            "color": "#FF6C6C",  # Color de fondo del evento
                             "start": st.session_state["time_inicial"],
                             "end": st.session_state["time_final"],
+                            "backgroundColor": "#FF4B4B",  # Color de fondo del evento
+                            "borderColor": "#FF4B4B"       # Color del borde del evento
                         })
-                        st.success("Registrado con exito, puede cerrar!")
+                        st.success("Registrado con éxito, puede cerrar!")
                     else:
-                        st.error("No se registro, status_code: {}".format(response))
+                        st.error("No se registró, status_code: {}".format(response))
         else:
             st.error("No se ha seleccionado una fecha.")
 
@@ -179,7 +182,7 @@ if state.get('eventChange') is not None:
     }
     envio = send(modified_data, method="PUT")
     if envio == '200':
-        st.success('Cita modificada con exito')
+        st.success('Cita modificada con éxito')
     else:
         st.error(f"No se pudo modificar la cita, status_code: {envio}")
 
