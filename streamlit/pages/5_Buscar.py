@@ -19,9 +19,9 @@ def buscar_dueno(dni_dueno):
         return {"error": f"Error de conexión al buscar los datos: {e}"}
 
 # Función para buscar datos del animal usando tu backend FastAPI
-def buscar_animal(chip):
+def buscar_animal(chip_animal):
     try:
-        response = requests.get(f"{animales_backend}/{chip}")
+        response = requests.get(f"{animales_backend}/{chip_animal}")
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:
