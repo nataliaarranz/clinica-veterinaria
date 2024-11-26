@@ -131,19 +131,18 @@ async def dar_baja_dueno(dni_dueno: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")    
 
 # Buscar dueño por DNI 
-@app.get("/buscar_dueno/{dni_dueno}") 
+@app.get("/duenos/{dni_dueno}") 
 async def buscar_dueno(dni_dueno: str): 
-    if not os.path.exists(registroDuenos_csv):
-        raise HTTPException(status_code = 404, detail = f"No se encontró el archivo de registros de dueños:{e}") 
-    # Cargamos los datos del CSV 
-    registro_df = pd.read_csv(registroDuenos_csv) 
-    # Buscamos el dueño por DNI 
-    dueño = registro_df[registro_df['dni_dueno'] == dni_dueno]  
-    if dueño.empty: 
-        raise HTTPException(status_code = 404, detail = "Dueño no encontrado") 
-    # Convertimos el resultado a un diccionario y lo devolvemos 
-    return dueño.to_dict(orient = 'records')[0]
-
+    try:
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_df = pd.read_csv(registroDuenos_csv)
+        dueño = registro_df[registro_df['dni_dueno'].str.strip() == dni_dueno.strip()]
+        if dueño.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        return dueño.to_dict(orient='records')[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 # Endpoints para animales
 @app.get("/animales/")
@@ -207,18 +206,18 @@ async def baja_animal(chip_animal: str):
     raise HTTPException(status_code=404, detail="Animal no encontrado")
 
 # Buscar animal por chip 
-@app.get("/buscar_animal/{chip_animal}") 
-async def buscar_animal(chip_animal: str): 
-    if not os.path.exists(registroAnimales_csv):
-        raise HTTPException(status_code = 404, detail = f"No se encontró el archivo de registros de animales:{e}") 
-    # Cargamos los datos del CSV 
-    registro_df = pd.read_csv(registroAnimales_csv) 
-    # Buscamos el animal por chip 
-    animal = registro_df[registro_df['chip_animal'] == chip_animal]  
-    if animal.empty: 
-        raise HTTPException(status_code = 404, detail = "Animal no encontrado.") 
-    # Convertimos el resultado a un diccionario y lo devolvemos 
-    return animal.to_dict(orient = 'records')[0]
+@app.get("/animales/{chip_animal}")
+async def buscar_animal(chip_animal: str):
+    try:
+        if not os.path.exists(registroAnimales_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de animales no encontrado.")
+        registro_df = pd.read_csv(registroAnimales_csv)
+        animal = registro_df[registro_df['chip_animal'].str.strip() == chip_animal.strip()]
+        if animal.empty:
+            raise HTTPException(status_code=404, detail="Animal no encontrado.")
+        return animal.to_dict(orient='records')[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
 
 
 

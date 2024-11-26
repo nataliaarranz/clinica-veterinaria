@@ -1,10 +1,11 @@
 import requests
+import streamlit as st
 
-# URL del microservicio (ajusta segun tu configuracion)
-duenos_backend = "https://fastapi:8000/duenos"
-animales_backend = "https://fastapi:8000/animales"
+# URL del microservicio (ajusta según tu configuración)
+duenos_backend = "http://fastapi:8000/duenos"
+animales_backend = "http://fastapi:8000/animales"
 
-# Funcion para buscar datos del dueno usando tu backend FastAPI
+# Función para buscar datos del dueño usando tu backend FastAPI
 def buscar_dueno(dni_dueno):
     try:
         response = requests.get(f"{duenos_backend}/{dni_dueno}")
@@ -15,9 +16,9 @@ def buscar_dueno(dni_dueno):
         else:
             return {"error": f"Error al buscar los datos: {response.status_code}"}
     except requests.exceptions.RequestException as e:
-        return {"error": f"Error de conexion al buscar los datos: {e}"}
+        return {"error": f"Error de conexión al buscar los datos: {e}"}
 
-# Funcion para buscar datos del animal usando tu backend FastAPI
+# Función para buscar datos del animal usando tu backend FastAPI
 def buscar_animal(chip):
     try:
         response = requests.get(f"{animales_backend}/{chip}")
@@ -28,19 +29,17 @@ def buscar_animal(chip):
         else:
             return {"error": f"Error al buscar los datos: {response.status_code}"}
     except requests.exceptions.RequestException as e:
-        return {"error": f"Error de conexion al buscar los datos: {e}"}
+        return {"error": f"Error de conexión al buscar los datos: {e}"}
 
-import streamlit as st
+# Lógica para la interfaz de usuario en Streamlit
+st.title("Buscar Dueños y Animales de Mascotas 🐾")
 
-# Titulo de la aplicacion
-st.title("Buscar Duños y Animales de Mascotas 🐾")
+# Sidebar para selección
+st.sidebar.title("Opciones de Búsqueda")
+opcion_buscar = st.sidebar.radio("¿Qué desea buscar?", ["Buscar Dueño", "Buscar Animal"])
 
-# Sidebar para seleccion
-st.sidebar.title("Opciones de Busqueda")
-opcion_buscar = st.sidebar.radio("¿Que desea buscar?", ["Buscar Dueño", "Buscar Animal"])
-
-# Formulario para buscar dueno
-def crear_formulario_busqueda_dueno():
+# Formulario para buscar dueño
+if opcion_buscar == "Buscar Dueño":
     st.subheader("Buscar Dueño")
     dni_dueno = st.text_input("DNI del dueño:", max_chars=10)
     if st.button("Buscar Dueño"):
@@ -52,7 +51,7 @@ def crear_formulario_busqueda_dueno():
             st.error(resultado["error"])
 
 # Formulario para buscar animal
-def crear_formulario_busqueda_animal():
+elif opcion_buscar == "Buscar Animal":
     st.subheader("Buscar Animal por Chip")
     chip_animal = st.text_input("Chip del animal:", max_chars=15)
     if st.button("Buscar Animal"):
@@ -62,9 +61,3 @@ def crear_formulario_busqueda_animal():
             st.json(resultado)
         else:
             st.error(resultado["error"])
-
-# Logica para mostrar formularios basada en la seleccion del sidebar
-if opcion_buscar == "Buscar Dueño":
-    crear_formulario_busqueda_dueno()
-elif opcion_buscar == "Buscar Animal":
-    crear_formulario_busqueda_animal()
