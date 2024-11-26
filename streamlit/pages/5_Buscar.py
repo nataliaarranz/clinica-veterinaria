@@ -1,96 +1,70 @@
-import streamlit as st 
-import requests 
+import requests
 
-# Título de la aplicación 
-st.title("Buscar Dueños de Mascotas 🐾") 
+# URL del microservicio (ajusta segun tu configuracion)
+duenos_backend = "https://fastapi:8000/duenos"
+animales_backend = "https://fastapi:8000/animales"
 
- # URL del microservicio (ajusta según tu configuración) 
-backend = "http://fastapi:8000/buscar_dueño"
-dueños_backend = "http://fastapi:8000/dueños"
-animales_backend = "http://fastapi:8000/animales"
+# Funcion para buscar datos del dueno usando tu backend FastAPI
+def buscar_dueno(dni_dueno):
+    try:
+        response = requests.get(f"{duenos_backend}/{dni_dueno}")
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            return {"error": "No existe dueño con el DNI introducido"}
+        else:
+            return {"error": f"Error al buscar los datos: {response.status_code}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Error de conexion al buscar los datos: {e}"}
 
-# Función para buscar datos del dueño 
-def buscar_dueño(dni_dueño): 
-    try: 
-        response = requests.get(dueños_backend) 
-        # Mostrar el resultado de la solicitud 
-        if response.status_code == 200: 
-            return response.json() # Retornar los datos del dueño 
-        elif response.status_code == 404: 
-            st.error("No existe dueño con el DNI introducido") 
-            return None 
-        else: 
-            st.error(f"Error al buscar los datos: {response.status_code}") 
-            st.error(f"Detalle: {response.text}") 
-            return None 
-    except requests.exceptions.RequestException as e: 
-        st.error(f"Error de conexión al buscar los datos: {e}") 
-        return None 
+# Funcion para buscar datos del animal usando tu backend FastAPI
+def buscar_animal(chip):
+    try:
+        response = requests.get(f"{animales_backend}/{chip}")
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            return {"error": "No existe animal con el chip introducido"}
+        else:
+            return {"error": f"Error al buscar los datos: {response.status_code}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Error de conexion al buscar los datos: {e}"}
 
-# Procesar el formulario 
-def procesar_formulario_busqueda_dueño(dni_dueño): 
-    if not dni_dueño: 
-        st.error("Obligatorio ingresar un DNI.") 
-        return 
-    # Buscar datos del dueño 
-    datos_dueño = buscar_dueño(dni_dueño) 
-    if datos_dueño: 
-        st.success("Dueño encontrado:") 
-        st.json(datos_dueño) # Mostrar los datos del dueño 
+import streamlit as st
 
-# Crear el formulario 
-def crear_formulario_busqueda_dueño(): 
-    st.subheader("Buscar Dueño") # Esta línea no debe tener ':' después 
-    with st.form("buscar_dueños"): 
-        dni_dueño = st.text_input("DNI del dueño: ", max_chars=10) 
-        submit_button = st.form_submit_button(label="Buscar") 
-        if submit_button: 
-            procesar_formulario_busqueda_dueño(dni_dueño) 
+# Titulo de la aplicacion
+st.title("Buscar Duños y Animales de Mascotas 🐾")
 
+# Sidebar para seleccion
+st.sidebar.title("Opciones de Busqueda")
+opcion_buscar = st.sidebar.radio("¿Que desea buscar?", ["Buscar Dueño", "Buscar Animal"])
 
-# Función para buscar datos del animal 
-def buscar_animal(chip_animal): 
-    try: 
-        response = requests.get(animales_backend) 
-        # Mostrar el resultado de la solicitud 
-        if response.status_code == 200: 
-            return response.json() # Retornar los datos del animal 
-        elif response.status_code == 404: 
-            st.error("No existe animal con el chip introducido") 
-            return None 
-        else: 
-            st.error(f"Error al buscar los datos: {response.status_code}") 
-            st.error(f"Detalle: {response.text}") 
-            return None 
-    except requests.exceptions.RequestException as e: 
-        st.error(f"Error de conexión al buscar los datos: {e}") 
-        return None 
+# Formulario para buscar dueno
+def crear_formulario_busqueda_dueno():
+    st.subheader("Buscar Dueño")
+    dni_dueno = st.text_input("DNI del dueño:", max_chars=10)
+    if st.button("Buscar Dueño"):
+        resultado = buscar_dueno(dni_dueno)
+        if "error" not in resultado:
+            st.success("Dueño encontrado:")
+            st.json(resultado)
+        else:
+            st.error(resultado["error"])
 
-# Procesar el formulario 
-def procesar_formulario_busqueda_animal(chip_animal): 
-    if not chip_animal: 
-        st.error("Obligatorio ingresar un chip.") 
-        return 
-    # Buscar datos del animal 
-    datos_animal = buscar_animal(chip_animal) 
-    if datos_animal: 
-        st.success("Animal encontrado:") 
-        st.json(datos_animal) # Mostrar los datos del animal 
+# Formulario para buscar animal
+def crear_formulario_busqueda_animal():
+    st.subheader("Buscar Animal por Chip")
+    chip_animal = st.text_input("Chip del animal:", max_chars=15)
+    if st.button("Buscar Animal"):
+        resultado = buscar_animal(chip_animal)
+        if "error" not in resultado:
+            st.success("Animal encontrado:")
+            st.json(resultado)
+        else:
+            st.error(resultado["error"])
 
-# Crear el formulario 
-def crear_formulario_busqueda_animal(): 
-    st.subheader("Buscar Animal") # Esta línea no debe tener ':' después 
-    with st.form("buscar_animales"): 
-        chip_animal = st.text_input("Chip del animal: ", max_chars=10) 
-        submit_button = st.form_submit_button(label="Buscar") 
-        if submit_button: 
-            procesar_formulario_busqueda_animal(chip_animal) 
-
-# Llamar a la función para crear el formulario
-#Mostrar formularios
-st.sidebar.title("Opciones")
-opcion = st.sidebar.selectbox("¿Desea dar de baja a un dueño o un animal?", ["Dueño", "Animal"])
-if opcion == "Dueño":
-    crear_formulario_busqueda_dueño() 
-elif opcion == "Animal":
+# Logica para mostrar formularios basada en la seleccion del sidebar
+if opcion_buscar == "Buscar Dueño":
+    crear_formulario_busqueda_dueno()
+elif opcion_buscar == "Buscar Animal":
     crear_formulario_busqueda_animal()

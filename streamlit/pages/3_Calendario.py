@@ -5,7 +5,7 @@ import requests
 st.title("Calendario de citas veterinarias 📆")
 
 backend = "http://fastapi:8000/citas"
-dueños_backend = "http://fastapi:8000/dueños"
+duenos_backend = "http://fastapi:8000/duenos"
 animales_backend = "http://fastapi:8000/animales"
 
 # Inicializar `st.session_state["events"]` como lista si no existe
@@ -28,20 +28,20 @@ def send(data, method="POST", cita_id=None):
     except Exception as e:
         return str(e)
 
-# Función para obtener los dueños registrados
-def get_dueños():
+# Funcion para obtener los duenos registrados
+def get_duenos():
     try:
-        response = requests.get(dueños_backend)
+        response = requests.get(duenos_backend)
         if response.status_code == 200:
             return response.json()
         else:
             st.error(f"Error al obtener dueños: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        st.error(f"Excepción al obtener dueños: {e}")
+        st.error(f"Excepcion al obtener dueños: {e}")
         return []
 
-# Función para obtener los animales registrados
+# Funcion para obtener los animales registrados
 def get_animales():
     try:
         response = requests.get(animales_backend)
@@ -51,7 +51,7 @@ def get_animales():
             st.error(f"Error al obtener animales: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        st.error(f"Excepción al obtener animales: {e}")
+        st.error(f"Excepcion al obtener animales: {e}")
         return []
 
 @st.dialog("Registrar nueva cita")
@@ -62,23 +62,23 @@ def popup():
         animales_nombre = [animal["nombre_animal"] for animal in animales] if animales else ["No hay animales registrados."]
         nombre_animal = st.selectbox("Nombre animal: ", animales_nombre)
         
-        dueños = get_dueños()
-        dueños_nombre = [dueño["nombre_dueño"] for dueño in dueños] if dueños else ["No hay dueños registrados."]
-        nombre_dueño = st.selectbox("Nombre dueño: ", dueños_nombre)
+        duenos = get_duenos()
+        duenos_nombre = [dueno["nombre_dueno"] for dueno in duenos] if duenos else ["No hay dueños registrados."]
+        nombre_dueno = st.selectbox("Nombre dueño: ", duenos_nombre)
         
-        # Menú desplegable para seleccionar el tratamiento
+        # Menu desplegable para seleccionar el tratamiento
         tratamientos = [
-            "Análisis",
-            "Vacunación",
-            "Desparasitación",
-            "Revisión general",
-            "Revisión cardiología",
-            "Revisión cutánea",
-            "Revisión broncología",
-            "Ecografías",
+            "Analisis",
+            "Vacunacion",
+            "Desparasitacion",
+            "Revision general",
+            "Revision cardiologia",
+            "Revision cutanea",
+            "Revision broncologia",
+            "Ecografias",
             "Limpieza bucal",
-            "Extracción de piezas dentales",
-            "Cirugía"
+            "Extraccion de piezas dentales",
+            "Cirugia"
         ]
         tratamiento = st.selectbox("Tipo de cita:", tratamientos)
         
@@ -86,7 +86,7 @@ def popup():
 
     if submitted:
         if "time_inicial" in st.session_state:
-            if nombre_animal == "No hay animales registrados." or nombre_dueño == "No hay dueños registrados.":
+            if nombre_animal == "No hay animales registrados." or nombre_dueno == "No hay dueños registrados.":
                 st.error("Por favor, asegúrate de que hay animales y dueños registrados.")
             elif not tratamiento:
                 st.error("El campo 'Tipo de cita' es obligatorio.")
@@ -102,7 +102,7 @@ def popup():
                 else:
                     data = {
                         "nombre_animal": nombre_animal,
-                        "nombre_dueño": nombre_dueño,
+                        "nombre_dueno": nombre_dueno,
                         "tratamiento": tratamiento,
                         "fecha_inicio": st.session_state["time_inicial"],
                         "fecha_fin": st.session_state["time_final"]
@@ -116,9 +116,9 @@ def popup():
                             "start": st.session_state["time_inicial"],
                             "end": st.session_state["time_final"],
                         })
-                        st.success("Registrado con éxito, puede cerrar!")
+                        st.success("Registrado con exito, puede cerrar!")
                     else:
-                        st.error("No se registró, status_code: {}".format(response))
+                        st.error("No se registro, status_code: {}".format(response))
         else:
             st.error("No se ha seleccionado una fecha.")
 
@@ -179,7 +179,7 @@ if state.get('eventChange') is not None:
     }
     envio = send(modified_data, method="PUT")
     if envio == '200':
-        st.success('Cita modificada con éxito')
+        st.success('Cita modificada con exito')
     else:
         st.error(f"No se pudo modificar la cita, status_code: {envio}")
 

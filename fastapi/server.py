@@ -11,19 +11,17 @@ from pydantic import BaseModel as PydanticBaseModel
 #NUEVO PARA ARREGLAR DASHBOARD
 app = FastAPI()
 
-
-
 class BaseModel(PydanticBaseModel):
     class Config:
         arbitrary_types_allowed = True
 
 # Definición de modelos
-class Dueño(BaseModel):
-    nombre_dueño: str
-    telefono_dueño: Optional[str] = None
-    email_dueño: str  
-    dni_dueño: str
-    direccion_dueño: str
+class Dueno(BaseModel):
+    nombre_dueno: str
+    telefono_dueno: Optional[str] = None
+    email_dueno: str  
+    dni_dueno: str
+    direccion_dueno: str
 
 class Animal(BaseModel):
     nombre_animal: str
@@ -35,7 +33,7 @@ class Animal(BaseModel):
 class Cita(BaseModel):
     id: Optional[int]
     nombre_animal: str
-    nombre_dueño: str
+    nombre_dueno: str
     tratamiento: str
     fecha_inicio: datetime
     fecha_fin: Optional[datetime] = None
@@ -69,7 +67,7 @@ app = FastAPI(
 )
 
 # Archivos CSV
-registroDueños_csv = "registroDueños.csv"
+registroDuenos_csv = "registroDuenos.csv"
 registroAnimales_csv = "registroAnimales.csv"
 
 #NUEVO PARA ARREGLAR DASHBOARD
@@ -86,54 +84,54 @@ async def retrieve_data():
         raise HTTPException(status_code=500, detail=f"Error al leer el archivo: {str(e)}")
 
 # Endpoints para dueños
-@app.get("/dueños/")
-def get_dueños():
-    if os.path.exists(registroDueños_csv):
-        registro_df = pd.read_csv(registroDueños_csv)
-        dueños = registro_df.to_dict(orient="records")
-        return dueños
+@app.get("/duenos/")
+def get_duenos():
+    if os.path.exists(registroDuenos_csv):
+        registro_df = pd.read_csv(registroDuenos_csv)
+        duenos = registro_df.to_dict(orient="records")
+        return duenos
     else:
         raise HTTPException(status_code=404, detail="No hay dueños registrados")
 
 @app.post("/alta_dueños/")
-async def alta_dueño(data: Dueño):
+async def alta_dueno(data: Dueno):
     try:
-        if os.path.exists(registroDueños_csv):
-            registro_df = pd.read_csv(registroDueños_csv)
+        if os.path.exists(registroDuenos_csv):
+            registro_df = pd.read_csv(registroDuenos_csv)
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_dueño", "telefono_dueño", "email_dueño", "dni_dueño",
-                "direccion_dueño"
+                "nombre_dueno", "telefono_dueno", "email_dueno", "dni_dueno",
+                "direccion_dueno"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registroDueños_csv, index=False)
+        registro_df.to_csv(registroDuenos_csv, index=False)
         return {"message": "Dueño registrado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
 #Dar de baja dueño
-@app.delete("/dar_baja_dueño/{dni_dueño}")
-async def dar_baja_dueño(dni_dueño: str):
+@app.delete("/dar_baja_dueno/{dni_dueno}")
+async def dar_baja_dueno(dni_dueno: str):
     try:
         #Verificar si existe el archivo
-        if not os.path.exists(registroDueños_csv):
+        if not os.path.exists(registroDuenos_csv):
             raise HTTPException(status_code=404, detail="No se encontró el archivo.")
         # Cargamos los datos del CSV 
-        registro_df = pd.read_csv(registroDueños_csv)
+        registro_df = pd.read_csv(registroDuenos_csv)
         #Buscar dueño a dar de baja
-        if "dni_dueño" not in registro_df.columns:
+        if "dni_dueno" not in registro_df.columns:
             raise HTTPException(status_code=404, detail="Dueño no encontrado.")
-        registro_df["dni_dueño"] = registro_df["dni_dueño"].astype(str).str.strip()
-        dni_dueño = dni_dueño.strip()  # Limpiar cualquier espacio extra del DNI proporcionado
+        registro_df["dni_dueno"] = registro_df["dni_dueno"].astype(str).str.strip()
+        dni_dueno = dni_dueno.strip()  # Limpiar cualquier espacio extra del DNI proporcionado
         #Verificar si existe el dueño
-        if dni_dueño not in registro_df["dni_dueño"].values:
+        if dni_dueno not in registro_df["dni_dueno"].values:
             raise HTTPException(status_code=404, detail="Dueño no encontrado.")
         #Eliminar dueño de la lista
-        registro_df = registro_df[registro_df["dni_dueño"] != dni_dueño]
+        registro_df = registro_df[registro_df["dni_dueno"] != dni_dueno]
         #Actualizar el archivo CSV
-        registro_df.to_csv(registroDueños_csv, index=False)
-        return {"message": f"Dueño con DNI {dni_dueño} eliminado correctamente"}
+        registro_df.to_csv(registroDuenos_csv, index=False)
+        return {"message": f"Dueno con DNI {dni_dueno} eliminado correctamente"}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
     except pd.errors.EmptyDataError:
@@ -144,14 +142,14 @@ async def dar_baja_dueño(dni_dueño: str):
 
 
 # Buscar dueño por DNI 
-@app.get("/buscar_dueño/{dni_dueño}") 
-async def buscar_dueño(dni_dueño: str): 
-    if not os.path.exists(registroDueños_csv):
+@app.get("/buscar_dueno/{dni_dueno}") 
+async def buscar_dueno(dni_dueno: str): 
+    if not os.path.exists(registroDuenos_csv):
         raise HTTPException(status_code = 404, detail = f"No se encontró el archivo de registros de dueños:{e}") 
     # Cargamos los datos del CSV 
-    registro_df = pd.read_csv(registroDueños_csv) 
+    registro_df = pd.read_csv(registroDuenos_csv) 
     # Buscamos el dueño por DNI 
-    dueño = registro_df[registro_df['dni_dueño'] == dni_dueño]  
+    dueño = registro_df[registro_df['dni_dueno'] == dni_dueno]  
     if dueño.empty: 
         raise HTTPException(status_code = 404, detail = "Dueño no encontrado") 
     # Convertimos el resultado a un diccionario y lo devolvemos 
