@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import re
 
 st.title("Formulario para dar de alta duenos 🖥️🖥")
 url = "http://fastapi:8000/alta_duenos"
@@ -31,6 +32,14 @@ def procesar_formulario_duenos(nombre_dueno, telefono_dueno, email_dueno, dni_du
     if not all([nombre_dueno, telefono_dueno, email_dueno, dni_dueno, direccion_dueno]):
         st.error("Obligatorio rellenar todos los campos.")
         return
+    # Validar que el nombre no contenga números
+    if re.search(r'\d', nombre_dueno):
+        st.error("El nombre del dueño no debe contener números.")
+        return
+    # Validar que el teléfono contenga solo números
+    if not telefono_dueno.isdigit():
+        st.error("El teléfono del dueño debe contener solo números.")
+        return
     # Guardar datos en CSV
     guardar_datos_dueno(nombre_dueno, telefono_dueno, email_dueno, dni_dueno, direccion_dueno)
 
@@ -42,7 +51,7 @@ def crear_formulario_duenos():
         # Datos del dueno
         st.subheader("Datos del dueño")
         nombre_dueno = st.text_input("Nombre del dueño: ", max_chars=50)
-        telefono_dueno = st.text_input("Telefono del dueño: ", max_chars=50)
+        telefono_dueno = st.text_input("Telefono del dueño: ", max_chars=10)
         email_dueno = st.text_input("Correo del dueño: ")
         dni_dueno = st.text_input("DNI del dueño: ", max_chars=10)
         direccion_dueno = st.text_input("Domicilio: ")

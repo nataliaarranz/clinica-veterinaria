@@ -4,6 +4,7 @@ import requests
 from datetime import datetime
 import pandas as pd 
 import os
+import re
 
 # URL del microservicio FastAPI
 url = "http://fastapi:8000/alta_animal"
@@ -48,6 +49,15 @@ def procesar_formulario_animales(nombre_animal, chip_animal, especie_animal, nac
     if not chip_valido(chip_animal):
         st.error("El chip debe ser un número de 15 dígitos.")
         return
+    # Validar que el nombre no contenga números
+    if re.search(r'\d', nombre_animal):
+        st.error("El nombre del animal no debe contener números.")
+        return
+    # Validar que el nombre no contenga números
+    if re.search(r'\d', especie_animal):
+        st.error("La especie del animal no debe contener números.")
+        return
+
     #Guardar datos en CSV
     guardar_datos_animales(nombre_animal,chip_animal,especie_animal,nacimiento_animal,sexo_animal)
 
