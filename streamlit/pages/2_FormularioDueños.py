@@ -19,7 +19,7 @@ def guardar_datos_dueno(nombre_dueno, telefono_dueno, email_dueno, dni_dueno, di
         response = requests.post(url, json=payload)
         # Mostrar el resultado de la solicitud
         if response.status_code == 200:
-            st.success("Datos enviados correctamente")
+            st.success(" Datos enviados correctamente ")
             st.json(response.json())  # Mostrar la respuesta del microservicio
         else:
             st.error(f"Error al enviar los datos: {response.status_code}")
@@ -59,7 +59,7 @@ def procesar_formulario_duenos(nombre_dueno, telefono_dueno, email_dueno, dni_du
 
 # Crear formulario
 def crear_formulario_duenos():
-    st.title("Registro de Dueños🐾")
+    st.title(" Registro de Dueños🐾")
 
     with st.form("registro_duenos"):
         # Datos del dueño
