@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_calendar import calendar
 import requests
+import streamlit as st
 
 st.title("Calendario de citas veterinarias 📆")
 
@@ -11,6 +12,9 @@ animales_backend = "http://fastapi:8000/animales"
 # Inicializar `st.session_state["events"]` como lista si no existe
 if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
     st.session_state["events"] = []
+# Inicializar un indicador de refresco
+if "refresh" not in st.session_state:
+    st.session_state["refresh"] = False
 
 def send(data, method="POST", cita_id=None):
     try:
@@ -98,7 +102,7 @@ def popup():
                     for event in st.session_state["events"]
                 )
                 if conflict:
-                                        st.error("El rango de fechas ya está ocupado. Selecciona otra hora.")
+                    st.error("El rango de fechas ya está ocupado. Selecciona otra hora.")
                 else:
                     data = {
                         "nombre_animal": nombre_animal,
@@ -120,6 +124,7 @@ def popup():
                             "borderColor": "#FF4B4B"       # Color del borde del evento
                         })
                         st.success("Registrado con éxito, puede cerrar!")
+                        
                     else:
                         st.error("No se registró, status_code: {}".format(response))
         else:
@@ -164,6 +169,11 @@ state = calendar(
     key='timegrid',
 )
 
+# Actualizar los eventos en el estado de Streamlit
+if state.get("eventsSet") is not None:
+    st.session_state["events"] = state["eventsSet"]
+
+
 if state.get("eventsSet") is not None:
     st.session_state["events"] = state["eventsSet"]
 
@@ -198,3 +208,4 @@ if state.get('eventClick') is not None:
             st.success("Cita cancelada.")
         else:
             st.error(f"No se pudo cancelar la cita, status_code: {envio}")
+

@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime, date
 from pydantic import BaseModel as PydanticBaseModel
 
+
 #NUEVO PARA ARREGLAR DASHBOARD
 app = FastAPI()
 
