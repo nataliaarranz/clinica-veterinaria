@@ -56,6 +56,7 @@ class SearchInterface:
         st.subheader("Buscar Animal por Chip")
         chip_animal = st.text_input("Chip del animal:", max_chars=15)
         if st.button("Buscar Animal"):
+            print(f"Buscando animal con chip: {chip_animal}")  # Agrega esta línea
             resultado = self.animal_service.buscar(chip_animal)
             if "error" not in resultado:
                 st.success("Animal encontrado:")

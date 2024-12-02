@@ -2,104 +2,127 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-# URL del microservicio FastAPI
-animales_backend = "http://fastapi:8000/animales"
-duenos_backend = "http://fastapi:8000/duenos"
+# Clase para manejar la lógica de los dueños
+class DuenoService:
+    def __init__(self, backend_url):
+        self.backend_url = backend_url
 
-# Título de la página
-st.title("Factura de la consulta")
-
-# Función para obtener los detalles del dueño desde el backend
-def obtener_duenos():
-    try:
-        response = requests.get(duenos_backend)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Error al obtener dueños: {response.status_code} - {response.text}")
+    def obtener_duenos(self):
+        try:
+            response = requests.get(self.backend_url)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.error(f"Error al obtener dueños: {response.status_code} - {response.text}")
+                return []
+        except Exception as e:
+            st.error(f"Error al obtener dueños: {e}")
             return []
-    except Exception as e:
-        st.error(f"Error al obtener dueños: {e}")
-        return []
 
-# Función para obtener los detalles del animal desde el backend
-def obtener_animales():
-    try:
-        response = requests.get(animales_backend)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Error al obtener animales: {response.status_code} - {response.text}")
+# Clase para manejar la lógica de los animales
+class AnimalService:
+    def __init__(self, backend_url):
+        self.backend_url = backend_url
+
+    def obtener_animales(self):
+        try:
+            response = requests.get(self.backend_url)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.error(f"Error al obtener animales: {response.status_code} - {response.text}")
+                return []
+        except Exception as e:
+            st.error(f"Error al obtener animales: {e}")
             return []
-    except Exception as e:
-        st.error(f"Error al obtener animales: {e}")
-        return []
 
-# Función para mostrar la factura
-def generar_factura(nombre_dueno, nombre_animal, tratamiento, precio_sin_iva, precio_con_iva):
-    st.subheader("Factura de Consulta Veterinaria")
-    st.write(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    st.write(f"Nombre del Dueño: {nombre_dueno}")
-    st.write(f"Nombre del Animal: {nombre_animal}")
-    
-    st.write("Tratamiento realizado:")
-    st.write(f"- {tratamiento} - {precio_sin_iva:.2f}€ (sin IVA)")
-    st.write(f"- {tratamiento} - {precio_con_iva:.2f}€ (con IVA)")
-    
-    st.write(f"**Total a Pagar: {precio_con_iva:.2f}€**")
-    
-    # Información del centro veterinario
-    st.write(f"**Información del Centro**")
-    st.write("Clinica Veterinaria Cuatro Patas")
-    st.write("Ubicación: Paseo de la Castellana, 14")
-    st.write("Teléfono: 912457890")
+# Clase para manejar la lógica de la factura
+class Factura:
+    def __init__(self, nombre_dueno, nombre_animal, tratamiento, precio_sin_iva):
+        self.nombre_dueno = nombre_dueno
+        self.nombre_animal = nombre_animal
+        self.tratamiento = tratamiento
+        self.precio_sin_iva = precio_sin_iva
+        self.iva = 0.21  # IVA del 21%
 
-# Función principal para el registro de consultas
-def registrar_consulta():
-    st.title("Registro de Consulta Veterinaria")
+    def precio_con_iva(self):
+        return self.precio_sin_iva * (1 + self.iva)
 
-    # Obtener los datos de dueños y animales
-    duenos = obtener_duenos()
-    animales = obtener_animales()
+    def mostrar_factura(self):
+        st.subheader("Factura de Consulta Veterinaria")
+        st.write(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        st.write(f"Nombre del Dueño: {self.nombre_dueno}")
+        st.write(f"Nombre del Animal: {self.nombre_animal}")
+        st.write("Tratamiento realizado:")
+        st.write(f"- {self.tratamiento} - {self.precio_sin_iva:.2f}€ (sin IVA)")
+        st.write(f"- {self.tratamiento} - {self.precio_con_iva():.2f}€ (con IVA)")
+        st.write(f"**Total a Pagar: {self.precio_con_iva():.2f}€**")
+        st.write(f"**Información del Centro**")
+        st.write("Clinica Veterinaria Cuatro Patas")
+        st.write("Ubicación: Paseo de la Castellana, 14")
+        st.write("Teléfono: 912457890")
 
-    if not duenos or not animales:
-        st.error("No se han podido obtener los datos necesarios.")
-        return
+# Clase para manejar el registro de consultas
+class Consulta:
+    def __init__(self, dueno_service, animal_service):
+        self.dueno_service = dueno_service
+        self.animal_service = animal_service
+        self.tratamientos = {
+            "Análisis": 15,
+            "Vacunación": 15,
+            "Desparasitación": 25,
+            "Revisión general": 30,
+            "Revisión cardiología": 55,
+            "Revisión cutánea": 45,
+            "Revisión broncología": 35,
+            "Ecografías": 50,
+            "Limpieza bucal": 50,
+            "Extracción de piezas dentales": 70,
+            "Cirugía": 250
+        }
 
-    # Selección de dueño y animal
-    nombre_dueno = st.selectbox("Selecciona el dueño:", [dueno["nombre_dueno"] for dueno in duenos])
-    nombre_animal = st.selectbox("Selecciona el animal:", [animal["nombre_animal"] for animal in animales])
+    def registrar_consulta(self):
+        st.title("Registro de Consulta Veterinaria")
 
-    # Definición de tratamientos y precios
-    tratamientos = {
-        "Análisis": 15,
-        "Vacunación": 15,
-        "Desparasitación": 25,
-        "Revisión general": 30,
-        "Revisión cardiología": 55,
-        "Revisión cutánea": 45,
-        "Revisión broncología": 35,
-        "Ecografías": 50,
-        "Limpieza bucal": 50,
-        "Extracción de piezas dentales": 70,
-        "Cirugía": 250
-    }
+        # Obtener los datos de dueños y animales
+        duenos = self.dueno_service.obtener_duenos()
+        animales = self.animal_service.obtener_animales()
 
-    # Selección del tratamiento
-    tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(tratamientos.keys()))
-    precio_sin_iva = tratamientos[tratamiento_seleccionado]
+        if not duenos or not animales:
+            st.error("No se han podido obtener los datos necesarios.")
+            return
 
-    # Calcular precio con IVA (suponiendo un IVA del 21%)
-    iva = 0.21
-    precio_con_iva = precio_sin_iva * (1 + iva)
+        # Selección de dueño y animal
+        nombre_dueno = st.selectbox("Selecciona el dueño:", [dueno["nombre_dueno"] for dueno in duenos])
+        nombre_animal = st.selectbox("Selecciona el animal:", [animal["nombre_animal"] for animal in animales])
 
+        # Selección del tratamiento
+        tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(self.tratamientos.keys()))
+        precio_sin_iva = self.tratamientos[tratamiento_seleccionado]
 
-    # Botón para generar la factura
-    if st.button("Generar Factura"):
-        if nombre_dueno and nombre_animal and tratamiento_seleccionado:
-            generar_factura(nombre_dueno, nombre_animal, tratamiento_seleccionado, precio_sin_iva, precio_con_iva)
-        else:
-            st.error("Por favor, completa todos los campos.")
+        # Botón para generar la factura
+        if st.button("Generar Factura"):
+            if nombre_dueno and nombre_animal and tratamiento_seleccionado:
+                factura = Factura(nombre_dueno, nombre_animal, tratamiento_seleccionado, precio_sin_iva)
+                factura.mostrar_factura()
+            else:
+                st.error("Por favor, completa todos los campos.")
 
-# Llamar a la función para registrar la consulta y generar la factura
-registrar_consulta()
+# Inicialización de servicios y la aplicación
+def main():
+    # URL del microservicio FastAPI
+    animales_backend = "http://fastapi:8000/animales"
+    duenos_backend = "http://fastapi:8000/duenos"
+
+    # Crear instancias de los servicios
+    dueno_service = DuenoService(duenos_backend)
+    animal_service = AnimalService(animales_backend)
+
+    # Crear instancia de la clase Consulta
+    consulta = Consulta(dueno_service, animal_service)
+
+    # Llamar a la función para registrar la consulta y generar la factura
+    consulta.registrar_consulta()
+
+if __name__ == "__main__":
+    main()

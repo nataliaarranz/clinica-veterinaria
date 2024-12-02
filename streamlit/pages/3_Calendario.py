@@ -66,32 +66,38 @@ class CitaInterface:
 
     def registrar_cita(self):
         st.write('Fecha de la cita:')
-        with st.form("form_nueva_cita"):
-            animales = self.animal_service.get_animales()
-            animales_nombre = [animal["nombre_animal"] for animal in animales] if animales else ["No hay animales registrados."]
-            nombre_animal = st.selectbox("Nombre animal: ", animales_nombre)
-            
-            duenos = self.dueno_service.get_duenos()
-            duenos_nombre = [dueno["nombre_dueno"] for dueno in duenos] if duenos else ["No hay dueños registrados."]
-            nombre_dueno = st.selectbox("Nombre dueño: ", duenos_nombre)
-            
-            # Menú desplegable para seleccionar el tratamiento
-            tratamientos = [
-                "Analisis",
-                "Vacunacion",
-                "Desparasitacion",
-                "Revision general",
-                "Revision cardiologia",
-                "Revision cutanea",
-                "Revision broncologia",
-                "Ecografias",
-                "Limpieza bucal",
-                "Extraccion de piezas dentales",
-                "Cirugia"
-            ]
-            tratamiento = st.selectbox("Tipo de cita:", tratamientos)
-            
-            submitted = st.form_submit_button("Registrar cita")
+         
+        with st.container():
+            # Usar columnas para centrar el contenido
+            col1, col2, col3 = st.columns([1, 2, 1])  # Ajusta los pesos según sea necesario
+
+            with col2:  # Columna central
+                with st.form("form_nueva_cita"):
+                    animales = self.animal_service.get_animales()
+                    animales_nombre = [animal["nombre_animal"] for animal in animales] if animales else ["No hay animales registrados."]
+                    nombre_animal = st.selectbox("Nombre animal: ", animales_nombre)
+                    
+                    duenos = self.dueno_service.get_duenos()
+                    duenos_nombre = [dueno["nombre_dueno"] for dueno in duenos] if duenos else ["No hay dueños registrados."]
+                    nombre_dueno = st.selectbox("Nombre dueño: ", duenos_nombre)
+                    
+                    # Menú desplegable para seleccionar el tratamiento
+                    tratamientos = [
+                        "Analisis",
+                        "Vacunacion",
+                        "Desparasitacion",
+                        "Revision general",
+                        "Revision cardiologia",
+                        "Revision cutanea",
+                        "Revision broncologia",
+                        "Ecografias",
+                        "Limpieza bucal",
+                        "Extraccion de piezas dentales",
+                        "Cirugia"
+                    ]
+                    tratamiento = st.selectbox("Tipo de cita:", tratamientos)
+                    
+                    submitted = st.form_submit_button("Registrar cita")
 
         if submitted:
             self._procesar_registro_cita(nombre_animal, nombre_dueno, tratamiento)

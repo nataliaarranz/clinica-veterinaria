@@ -96,10 +96,10 @@ class AnimalRepository(DataRepository):
     def delete(self, chip_animal: str):
         if os.path.exists(self.filename):
             df = pd.read_csv(self.filename)
-            df = df[df["chip_animal"] != chip_animal]
+            df = df[df["chip_animal"].astype(str) != chip_animal]  # Asegúrate de que se compare como string
             df.to_csv(self.filename, index=False)
         else:
-                        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
+            raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
 
 # Inicialización de los repositorios
 dueno_repository = DuenoRepository("registroDuenos.csv")
@@ -140,9 +140,27 @@ async def buscar_dueno(dni_dueno: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 # Endpoints para animales
+
 @app.get("/animales/")
 def get_animales():
-    return animal_repository.get_all()
+    try:
+        return animal_repository.get_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener los animales: {str(e)}")
+
+@app.get("/animales/{chip_animal}")
+async def buscar_animal(chip_animal: str):
+    try:
+        animales = animal_repository.get_all()
+        print(f"Animales actuales: {animales}")  # Para depuración
+        print(f"Buscando animal con chip: {chip_animal}")  # Para depuración
+        animal = next((a for a in animales if str(a['chip_animal']).strip() == chip_animal.strip()), None)
+        if animal is None:
+            raise HTTPException(status_code=404, detail="Animal no encontrado.")
+        return animal
+    except Exception as e:
+        print(f"Error al buscar animal: {str(e)}")  # Imprimir el error
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
 
 @app.post("/alta_animal/")
 async def alta_animal(data: Animal):
@@ -155,23 +173,15 @@ async def alta_animal(data: Animal):
 @app.delete("/animales/{chip_animal}")
 def eliminar_animal(chip_animal: str):
     try:
+        print(f"Intentando eliminar animal con chip: {chip_animal}")
+        animales = animal_repository.get_all()
+        print(f"Animales actuales: {animales}")
         animal_repository.delete(chip_animal)
         return {"detail": "Animal eliminado exitosamente"}
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
-
-@app.get("/animales/{chip_animal}")
-async def buscar_animal(chip_animal: str):
-    try:
-        animales = animal_repository.get_all()
-        animal = next((a for a in animales if a['chip_animal'].strip() == chip_animal.strip()), None)
-        if animal is None:
-            raise HTTPException(status_code=404, detail="Animal no encontrado.")
-        return animal
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
 
 # Endpoints para citas
 citas_db = []
