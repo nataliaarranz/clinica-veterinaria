@@ -58,7 +58,7 @@ col1, col2, col3 = st.columns(3)
 
 col4, col5, col6 = st.columns(3)
 with col1:
-    col1.subheader('# contratos')
+    col1.subheader('# CONTRATOS')
     info_box(registros)
 with col2:
     col2.subheader('# adjudicatarios')
