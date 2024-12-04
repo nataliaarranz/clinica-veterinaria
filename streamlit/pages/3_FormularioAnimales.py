@@ -1,80 +1,92 @@
-##CÓDIGO ORIGINAL RAUL
 import streamlit as st
 import requests
-from datetime import datetime
-import pandas as pd 
-import os
 import re
+from datetime import datetime
 
 # URL del microservicio FastAPI
 url = "http://fastapi:8000/alta_animal"
 
-#ALTA DE ANIMALES
-st.title("Formulario para dar de alta animales 🖥️🖥")
+# Clase para representar a un animal
+class Animal:
+    def __init__(self, nombre, chip, especie, nacimiento, sexo):
+        self.nombre = nombre
+        self.chip = chip
+        self.especie = especie
+        self.nacimiento = nacimiento
+        self.sexo = sexo
 
-#Validar el chip
-def chip_valido(chip_animal):
-    return chip_animal.isdigit() and len(chip_animal)==15
+# Clase para validar los datos del animal
+class ValidadorAnimal:
+    @staticmethod
+    def validar_chip(chip):
+        return chip.isdigit() and len(chip) == 15
 
-#Guardar datos del dueno
-def guardar_datos_animales(nombre_animal,chip_animal,especie_animal,nacimiento_animal,sexo_animal):
-    chip_animal = chip_animal.strip()
-    payload = {
-        "nombre_animal": nombre_animal,
-        "chip_animal": chip_animal,
-        "especie_animal": especie_animal,
-        "nacimiento_animal": nacimiento_animal,
-        "sexo": sexo_animal
-    }
-    # Enviar los datos al microservicio
-    try:
-        response = requests.post(url, json=payload)
-        # Mostrar el resultado de la solicitud
-        if response.status_code == 200:
-            st.success("Datos enviados correctamente")
-            st.json(response.json())  # Mostrar la respuesta del microservicio
+    @staticmethod
+    def validar_animal(animal):
+        if not all([animal.nombre, animal.chip, animal.especie, animal.nacimiento, animal.sexo]):
+            return "Obligatorio rellenar todos los campos."
+        if not ValidadorAnimal.validar_chip(animal.chip):
+            return "El chip debe ser un número de 15 dígitos."
+        if re.search(r'\d', animal.nombre):
+            return "El nombre del animal no debe contener números."
+        if re.search(r'\d', animal.especie):
+            return "La especie del animal no debe contener números."
+        return None
+
+# Clase para manejar el servicio de envío de datos
+class AnimalService:
+    def __init__(self, url):
+        self.url = url
+
+    def guardar_datos(self, animal):
+        payload = {
+            "nombre_animal": animal.nombre,
+            "chip_animal": animal.chip,
+            "especie_animal": animal.especie,
+            "nacimiento_animal": animal.nacimiento,
+            "sexo": animal.sexo
+        }
+        try:
+            response = requests.post(self.url, json=payload)
+            return response
+        except requests.exceptions.RequestException as e:
+            return None, str(e)
+
+# Clase para manejar la interfaz de usuario
+class FormularioAnimales:
+    def __init__(self):
+        self.animal_service = AnimalService(url)
+
+    def crear_formulario(self):
+        st.title("Registro de Animales🐾")
+        with st.form("registro_animales"):
+            st.subheader("Datos del animal")
+            nombre_animal = st.text_input("Nombre del animal: ", max_chars=50)
+            chip_animal = st.text_input("Número de chip de animal: ", max_chars=15).strip()
+            especie_animal = st.text_input("Especie del animal: ")
+            nacimiento_animal = st.date_input("Fecha de nacimiento del animal: ")
+            sexo_animal = st.selectbox("Sexo del animal: ", ["Macho", "Hembra"])
+            submit_button = st.form_submit_button(label="Dar de alta animal")
+
+            if submit_button:
+                self.procesar_formulario(nombre_animal, chip_animal, especie_animal, nacimiento_animal.strftime("%Y-%m-%d"), sexo_animal)
+
+    def procesar_formulario(self, nombre, chip, especie, nacimiento, sexo):
+        animal = Animal(nombre, chip, especie, nacimiento, sexo)
+        error = ValidadorAnimal.validar_animal(animal)
+
+        if error:
+            st.error(error)
         else:
-            st.error(f"Error al enviar los datos: {response.status_code}")
-            st.error(f"Detalle: {response.text}")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error de conexion al enviar los datos: {e}")
+            response = self.animal_service.guardar_datos(animal)
+            if response is not None and response.status_code == 200:
+                st.success("Datos enviados correctamente")
+                st.json(response.json())  # Mostrar la respuesta del microservicio
+            else:
+                error_message = "Error de conexión" if response is None else response.text
+                st.error(f"Error al enviar los datos: {error_message}")
 
-#Procesar formulario
-def procesar_formulario_animales(nombre_animal, chip_animal, especie_animal, nacimiento_animal, sexo_animal):
-    #Validar campos completos
-    if not all([nombre_animal, chip_animal, especie_animal, nacimiento_animal, sexo_animal]):
-        st.error("Obligatorio rellenar todos los campos.")
-        return
-    #Validar chip
-    if not chip_valido(chip_animal):
-        st.error("El chip debe ser un número de 15 dígitos.")
-        return
-    # Validar que el nombre no contenga números
-    if re.search(r'\d', nombre_animal):
-        st.error("El nombre del animal no debe contener números.")
-        return
-    # Validar que el nombre no contenga números
-    if re.search(r'\d', especie_animal):
-        st.error("La especie del animal no debe contener números.")
-        return
-
-    #Guardar datos en CSV
-    guardar_datos_animales(nombre_animal,chip_animal,especie_animal,nacimiento_animal,sexo_animal)
-
-#Crear formulario
-def crear_formulario_animales():
-    st.title("Registro de Animales🐾")
-    with st.form("registro_animales"):
-        # Datos del animales
-        st.subheader("Datos del animal")
-        nombre_animal = st.text_input("Nombre del animal: ", max_chars = 50)
-        chip_animal = st.text_input("Numero de chip de animal: ", max_chars = 15).strip()
-        especie_animal = st.text_input("Especie del animal: ")
-        nacimiento_animal = st.date_input("Fecha de nacimiento del animal: ")
-        sexo_animal = st.selectbox("Sexo del animal: ", ["Macho", "Hembra"])
-        submit_button = st.form_submit_button(label="Dar de alta animal")
-        
-        if submit_button:
-            procesar_formulario_animales(nombre_animal, chip_animal, especie_animal, nacimiento_animal.strftime("%Y-%m-%d"), sexo_animal)
-#Llamar funcion crear formulario
-crear_formulario_animales()
+# Ejecutar el formulario
+if __name__ == "__main__":
+    formulario = FormularioAnimales()
+    formulario.crear_formulario()

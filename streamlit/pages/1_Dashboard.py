@@ -107,6 +107,7 @@ print("Columnas en clientes_data:", clientes_data.columns)  # Imprimir los nombr
 # Convertimos las fechas de las facturas a formato datetime
 facturas_data = pd.DataFrame(facturas_data)
 
+<<<<<<< HEAD
 # Imprimir las columnas disponibles en facturas_data
 print("Datos de facturas:", facturas_data.head())  # Imprimir las primeras filas
 print("Columnas en facturas_data:", facturas_data.columns)  # Imprimir los nombres de las columnas
@@ -124,3 +125,4 @@ if not facturas_data.empty:
     facturacion_evolucion = facturas_data.groupby('fecha')['importe_con_iva'].sum().reset_index()
     fig_facturacion = px.line(facturacion_evolucion, x='fecha', y='importe_con_iva', title='Evolución de la Facturación')
     st.plotly_chart(fig_facturacion)
+=======
