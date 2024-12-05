@@ -96,7 +96,7 @@ facturacion_total, facturas_data = obtener_facturacion()
 
 # KPIs
 beneficio_neto = calcular_beneficio_neto()
-ingreso_medio = ingreso_medio()
+#ingreso_medio = ingreso_medio()
 
 
 # Mostrar el dashboard con los nuevos KPIs

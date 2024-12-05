@@ -286,5 +286,5 @@ def retrieve_data():
         raise HTTPException(status_code=500, detail=f"Error al recuperar datos: {str(e)}")
 
 # Endpoint para enviar formulario
-class FormData(BaseModel):
-    date: str
+#class FormData(BaseModel):
+#    date: str
