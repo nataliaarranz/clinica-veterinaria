@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
+
 Base = declarative_base()
 
 # Modelo Dueño
@@ -14,7 +15,9 @@ class Dueno(Base):
     email_dueno = Column(String, nullable=False)
     dni_dueno = Column(String, unique=True, nullable=False)
     direccion_dueno = Column(String, nullable=False)
-
+    
+    def __str__(self):
+        return self.id_dueno()
     # Relación con Animales
     animales = relationship("Animal", back_populates="dueno")
 
@@ -40,7 +43,7 @@ class Animal(Base):
 class Cita(Base):
     __tablename__ = 'citas'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_cita = Column(Integer, primary_key=True, autoincrement=True)
     nombre_animal = Column(String, nullable=False)
     nombre_dueno = Column(String, nullable=False)
     tratamiento = Column(String, nullable=False)
@@ -50,3 +53,4 @@ class Cita(Base):
     # Relación con Animal
     animal_id = Column(Integer, ForeignKey('animales.id'), nullable=False)
     animal = relationship("Animal", back_populates="citas")
+
