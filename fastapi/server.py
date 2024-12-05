@@ -1,9 +1,13 @@
 import os
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel as PydanticBaseModel
 from typing import List, Optional
 from datetime import datetime, date
+from sqlalchemy.orm import Session
+from sqlalchemy import init_db
+from sqlalchemy import Dueno, Animal, Cita
+from sqlalchemy import SessionLocal
 
 app = FastAPI()
 
@@ -101,11 +105,29 @@ class AnimalRepository(DataRepository):
         else:
             raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
 
+#Repositorio de Facturas
+class FacturaRepository(DataRepository):
+    def get_all(self) -> List[dict]:
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            return df.to_dict(orient="records")
+        raise HTTPException(status_code=404, detail="No hay facturas registradas")
+
 # Inicialización de los repositorios
 dueno_repository = DuenoRepository("registroDuenos.csv")
 animal_repository = AnimalRepository("registroAnimales.csv")
+factura_repository = FacturaRepository("registroFacturas.csv")
 
 # Endpoints para dueños
+#Base de datos dueños
+@app.post("/duenos/")
+def crear_dueno(nombre_dueno:str, telefono_dueno:str, email_dueno: str, dni_dueno:str, direccio_dueno:str,
+                db: Session = Depends(get_db)):
+    nuevo_dueno = Dueno(nombre_dueno=nombre_dueno, telefono_dueno=telefono_dueno, email_dueno=email_dueno, dni_dueno=dni_dueno, direccio_dueno=direccio_dueno)
+    db.add(nuevo_dueno)
+    db.commit()
+    db.refresh(nuevo_dueno)
+    return nuevo_dueno
 @app.get("/duenos/")
 def get_duenos():
     return dueno_repository.get_all()
@@ -140,6 +162,13 @@ async def buscar_dueno(dni_dueno: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 # Endpoints para animales
+#Base de datos animales
+@app.get("/duenos/{id_dueno}/animales/")
+def obtener_animales(id_dueno:int, db: Session = Depends(get_db)):
+    dueno = db.query(Dueno).filter(Dueno.id_dueno == id_dueno).first()
+    if not dueno:
+        raise HTTPException(status_code=404, detail="Dueño no encontrado")
+    return dueno.animales
 
 @app.get("/animales/")
 def get_animales():
@@ -187,6 +216,16 @@ def eliminar_animal(chip_animal: str):
 citas_db = []
 next_id = 1
 
+#Base de datos citas
+@app.post("/citas/")
+def crear_cita(id_animal: int, tratamiento: str, fecha_inicio: datetime, fecha_fin:Optional[datetime],
+               db: Session = Depends(get_db)):
+    cita = Cita(id_animal=id_animal, tratamiento=tratamiento, fecha_inicio=fecha_inicio, fecha_fin = fecha_fin)
+    db.add(cita)
+    db.commit()
+    db.refresh(cita)
+    return cita
+
 @app.post("/citas/", response_model=Cita)
 def crear_cita(cita: Cita):
     global next_id
@@ -209,6 +248,31 @@ def eliminar_cita(cita_id: int):
     global citas_db
     citas_db = [cita for cita in citas_db if cita.id != cita_id]
     return {"detail": "Cita eliminada exitosamente"}
+
+#Tratamientos
+tratamientos = {
+    "Análisis": 15,
+    "Vacunación": 15,
+    "Desparasitación": 25,
+    "Revisión general": 30,
+    "Revisión cardiología": 55,
+    "Revisión cutánea": 45,
+    "Revisión broncología": 35,
+    "Ecografías": 50,
+    "Limpieza bucal": 50,
+    "Extracción de piezas dentales": 70,
+    "Cirugía": 250
+}
+
+#Obtener listado de tratamientos
+@app.get ("/tratamientos")
+def obtener_tratamientos():
+    return list(tratamientos.keys())
+
+#Facturación
+@app.get("/facturas/")
+def get_facturas():
+    return factura_repository.get_all()
 
 # Endpoint para recuperar datos de contratos
 @app.get("/retrieve_data/")
