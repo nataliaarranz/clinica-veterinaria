@@ -12,6 +12,12 @@ class BaseModel(PydanticBaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+class Tratamiento(BaseModel):
+    id: Optional[int]
+    nombre_tratamiento: str
+    importe_con_iva: float
+    fecha: datetime
+
 class Dueno(BaseModel):
     nombre_dueno: str
     telefono_dueno: Optional[str] = None
@@ -33,6 +39,11 @@ class Cita(BaseModel):
     tratamiento: str
     fecha_inicio: datetime
     fecha_fin: Optional[datetime] = None
+
+class Factura(BaseModel):
+    id: Optional[int]
+    importe_con_iva: float
+    fecha: datetime
 
 # Interfaz para el manejo de datos
 class DataRepository:
@@ -73,6 +84,37 @@ class DuenoRepository(DataRepository):
         else:
             raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
 
+# Implementación para los Tratamientos:
+class TratamientoRepository(DataRepository):
+    def __init__(self, filename: str):
+        self.filename = filename
+
+    def get_all(self) -> List[dict]:
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            return df.to_dict(orient="records")
+        raise HTTPException(status_code=404, detail="No hay tratamientos registrados")
+
+    def add(self, tratamiento: Tratamiento):
+        nuevo_registro = pd.DataFrame([tratamiento.dict()])
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            df = pd.concat([df, nuevo_registro], ignore_index=True)
+        else:
+            df = nuevo_registro
+        df.to_csv(self.filename, index=False)
+
+# Implementación para las Facturas:
+class FacturaRepository(DataRepository):
+    def __init__(self, filename: str):
+        self.filename = filename
+
+    def get_all(self) -> List[dict]:
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            return df.to_dict(orient="records")
+        raise HTTPException(status_code=404, detail="No hay facturas registradas")
+
 # Implementación para Animales
 class AnimalRepository(DataRepository):
     def __init__(self, filename: str):
@@ -104,6 +146,8 @@ class AnimalRepository(DataRepository):
 # Inicialización de los repositorios
 dueno_repository = DuenoRepository("registroDuenos.csv")
 animal_repository = AnimalRepository("registroAnimales.csv")
+tratamiento_repository = TratamientoRepository("registroTratamientos.csv")
+factura_repository = FacturaRepository("registroFacturas.csv")
 
 # Endpoints para dueños
 @app.get("/duenos/")
@@ -220,6 +264,22 @@ def retrieve_data():
         return {"contratos": todosmisdatosdict}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al recuperar datos: {str(e)}")
+
+# Endpoint para obtener los tratamientos:
+@app.get("/tratamientos/")
+def get_tratamientos():
+    try:
+        return tratamiento_repository.get_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener los tratamientos: {str(e)}")
+
+# Endpoint para obtener todas las facturas:
+@app.get("/facturas/")
+def get_facturas():
+    try:
+        return factura_repository.get_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las facturas: {str(e)}")
 
 # Endpoint para enviar formulario
 class FormData(BaseModel):

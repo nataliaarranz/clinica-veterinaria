@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 
 # Configuración de la URL base del servidor FastAPI
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8000" 
 
 # Cargar datos desde el servidor FastAPI
 @st.cache_data(ttl=600)
