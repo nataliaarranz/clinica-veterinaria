@@ -3,19 +3,26 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-#SERVER
-@st.cache_data
+# Configuración de la URL base del servidor FastAPI
+BASE_URL = "http://localhost:8000"
+
+# Cargar datos desde el servidor FastAPI
+@st.cache_data(ttl=600)
 def load_data(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            st.error(f"Error al cargar datos: {r.status_code} - {r.text}")
+            return None
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error de conexión: {e}")
         return None
-    mijson = r.json()
-    return mijson
 
 # Función para obtener el número de dueños
 def obtener_numero_duenos():
     try:
-        duenos = load_data("http://fastapi:8000/duenos")
+        duenos = load_data(f"{BASE_URL}/duenos")
         if duenos is not None:
             return len(duenos), duenos
         else:
@@ -24,121 +31,79 @@ def obtener_numero_duenos():
         st.error(f"Error al obtener los dueños: {e}")
         return 0, []
 
-#Función para obtener el número de animales
+# Función para obtener el número de animales
 def obtener_numero_animales():
     try:
-        animales = load_data("http://fastapi:8000/animales")
+        animales = load_data(f"{BASE_URL}/animales")
         if animales is not None:
-            return len(animales), animales  #Devuelve número de animales y la lista de animales
+            return len(animales), animales
         else:
-            return 0, []  #Devuelve una lista vacía si no hay animales
+            return 0, []
     except Exception as e:
         st.error(f"Error al obtener los animales: {e}")
         return 0, []
 
-#Función para obtener el número de tratamientos
+# Función para obtener el número de tratamientos
 def obtener_numero_tratamientos():
     try:
-        tratamientos = load_data("http://fastapi:8000/tratamientos")
+        tratamientos = load_data(f"{BASE_URL}/tratamientos")
         if tratamientos is not None:
-            return len(tratamientos), tratamientos  #Devuelve el número de tratamientos y la lista de tratamientos
+            return len(tratamientos), tratamientos
         else:
-            return 0, []  #Devuelve 0 y una lista vacía si no hay tratamientos
+            return 0, []
     except Exception as e:
         st.error(f"Error al obtener los tratamientos: {e}")
         return 0, []
 
-#Función para obtener la facturación
+# Función para obtener la facturación total
 def obtener_facturacion():
     try:
-        facturas = load_data("http://fastapi:8000/facturas")
+        facturas = load_data(f"{BASE_URL}/facturas")
         if facturas is not None:
-            # Calcular el total facturado sumando los importes con IVA
             total_facturado = sum(factura["importe_con_iva"] for factura in facturas if "importe_con_iva" in factura)
-            return total_facturado, facturas  # Retorna el total facturado y la lista de facturas
+            return total_facturado, facturas
         else:
-            return 0.0, []  # Retorna 0 y una lista vacía si no hay facturas
+            return 0.0, []
     except Exception as e:
         st.error(f"Error al obtener la facturación: {e}")
         return 0.0, []
 
-#Calcular KPIs
-#Función para obtener el beneficio neto
+# Función para calcular el beneficio neto
 def calcular_beneficio_neto():
-    #Definir gastos fijos
     alquiler = 500
     sueldo_dueno = 400
     gastos_totales = alquiler + sueldo_dueno
-    #Obtener el total facturado
-    url = "http://fastapi:8000/facturas"
+    total_facturado, _ = obtener_facturacion()
+    return total_facturado - gastos_totales
+
+# Función para calcular el ingreso medio por cita
+def ingreso_medio_por_cita():
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            facturas = response.json()
-            total_facturado = sum(factura["importe_con_iva"] for factura in facturas if "importe_con_iva" in factura)
-            #Beneficio neto
-            beneficio_neto = total_facturado - gastos_totales
-            return beneficio_neto
-        else:
-            st.error(f"Error al obtener la facturación: {response.status_code}")
-            return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error de conexión: {e}")
-        return None
+        citas = load_data(f"{BASE_URL}/citas")
+        if citas:
+            total_facturado, _ = obtener_facturacion()
+            ingreso_medio = total_facturado / len(citas) if citas else 0.0
+            return ingreso_medio
+        return 0.0
+    except Exception as e:
+        st.error(f"Error al calcular el ingreso medio: {e}")
+        return 0.0
 
-#Función para obtener el ingreso medio por cita
-def calcular_ingreso_medio():
-    # Obtener el número de tratamientos
-    url_tratamientos = "http://fastapi:8000/tratamientos"
-    try:
-        response_tratamientos = requests.get(url_tratamientos)
-        if response_tratamientos.status_code == 200:
-            tratamientos = response_tratamientos.json()
-            numero_tratamientos = len(tratamientos)
-            
-            # Obtener el total facturado
-            url_facturas = "http://fastapi:8000/facturas"
-            response_facturas = requests.get(url_facturas)
-            if response_facturas.status_code == 200:
-                facturas = response_facturas.json()
-                total_facturado = sum(factura["importe_con_iva"] for factura in facturas if "importe_con_iva" in factura)
-                
-                # Ingreso medio
-                if numero_tratamientos > 0:
-                    ingreso_medio = total_facturado / numero_tratamientos
-                    return ingreso_medio
-                else:
-                    return 0.0  # Retorna 0 si no hay tratamientos
-            else:
-                st.error(f"Error al obtener la facturación: {response_facturas.status_code}")
-                return None
-        else:
-            st.error(f"Error al obtener los tratamientos: {response_tratamientos.status_code}")
-            return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error de conexión: {e}")
-        return None
-
-
-# Obtener los datos y preparar las métricas
+# Obtener datos y métricas
 numero_duenos, duenos_data = obtener_numero_duenos()
-numero_animales, animales_data = obtener_numero_animales()  # Obtener el número de animales
-numero_tratamientos, tratamientos_data = obtener_numero_tratamientos()  # Obtener el número de tratamientos
+numero_animales, animales_data = obtener_numero_animales()
+numero_tratamientos, tratamientos_data = obtener_numero_tratamientos()
 facturacion_total, facturas_data = obtener_facturacion()
-
-# KPIs
 beneficio_neto = calcular_beneficio_neto()
-ingreso_medio = calcular_ingreso_medio()
+ingreso_medio = ingreso_medio_por_cita()
 
-
-# Mostrar el dashboard con los nuevos KPIs
+# Mostrar el dashboard
 st.title("Dashboard de seguimiento de Consultas Veterinarias")
 
 st.header("Información general")
-# Definir los valores para mostrar en las cajas de información
 col1, col2, col3 = st.columns(3)
-
 col4, col5, col6 = st.columns(3)
+
 with col1:
     col1.subheader('# Clientes registrados')
     st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{numero_duenos}</p></div>', unsafe_allow_html=True)
@@ -158,30 +123,19 @@ with col6:
     col6.subheader('# Ingreso medio por cita (€)')
     st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{ingreso_medio:.2f}</p></div>', unsafe_allow_html=True)
 
-# **Evolución del número de dueños**
-# Convertimos los datos de dueños a un DataFrame
-duenos_data = pd.DataFrame(duenos_data)
-print("Datos de clientes:", duenos_data.head())  # Imprimir las primeras filas
-print("Columnas en clientes_data:", duenos_data.columns)  # Imprimir los nombres de las columnas
+# Gráficos de evolución
+if duenos_data:
+    duenos_df = pd.DataFrame(duenos_data)
+    if 'fecha' in duenos_df.columns:
+        duenos_df['fecha'] = pd.to_datetime(duenos_df['fecha'])
+        duenos_evolucion = duenos_df.groupby('fecha').size().reset_index(name='numero_duenos')
+        fig_duenos = px.line(duenos_evolucion, x='fecha', y='numero_duenos', title='Evolución del Número de Dueños')
+        st.plotly_chart(fig_duenos)
 
-# **Evolución de la facturación**
-# Convertimos las fechas de las facturas a formato datetime
-facturas_data = pd.DataFrame(facturas_data)
-
-# Imprimir las columnas disponibles en facturas_data
-print("Datos de facturas:", facturas_data.head())  # Imprimir las primeras filas
-print("Columnas en facturas_data:", facturas_data.columns)  # Imprimir los nombres de las columnas
-
-# Gráfico de la evolución del número de clientes
-if not duenos_data.empty:
-    duenos_data['fecha'] = pd.to_datetime(duenos_data['fecha'])  # Asegúrate de que la columna de fecha exista
-    duenos_evolucion = duenos_data.groupby('fecha').size().reset_index(name='numero_duenos')
-    fig_duenos = px.line(duenos_evolucion, x='fecha', y='numero_duenos', title='Evolución del Número de Dueños')
-    st.plotly_chart(fig_duenos)
-
-# Gráfico de la evolución de la facturación
-if not facturas_data.empty:
-    facturas_data['fecha'] = pd.to_datetime(facturas_data['fecha'])  # Asegúrate de que la columna de fecha exista
-    facturacion_evolucion = facturas_data.groupby('fecha')['importe_con_iva'].sum().reset_index()
-    fig_facturacion = px.line(facturacion_evolucion, x='fecha', y='importe_con_iva', title='Evolución de la Facturación')
-    st.plotly_chart(fig_facturacion)
+if facturas_data:
+    facturas_df = pd.DataFrame(facturas_data)
+    if 'fecha' in facturas_df.columns and 'importe_con_iva' in facturas_df.columns:
+        facturas_df['fecha'] = pd.to_datetime(facturas_df['fecha'])
+        facturacion_evolucion = facturas_df.groupby('fecha')['importe_con_iva'].sum().reset_index()
+        fig_facturacion = px.line(facturacion_evolucion, x='fecha', y='importe_con_iva', title='Evolución de la Facturación')
+        st.plotly_chart(fig_facturacion)
