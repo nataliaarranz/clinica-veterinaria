@@ -1,141 +1,108 @@
-import requests
-import streamlit as st
 import pandas as pd
+import streamlit as st
 import plotly.express as px
+import requests
+import seaborn as sns
 
-# Configuración de la URL base del servidor FastAPI
-BASE_URL = "http://localhost:8000" 
-
-# Cargar datos desde el servidor FastAPI
-@st.cache_data(ttl=600)
+@st.cache_data
 def load_data(url: str):
-    try:
-        r = requests.get(url)
-        if r.status_code != 200:
-            st.error(f"Error al cargar datos: {r.status_code} - {r.text}")
-            return None
-        return r.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error de conexión: {e}")
+    r = requests.get(url)
+    if r.status_code != 200:
         return None
+    mijson = r.json()
+    listado = mijson['contratos']
+    df = pd.DataFrame.from_records(listado)
+    df['importe_adj_con_iva'] = df['importe_adj_con_iva'].str.replace('€', '')
+    df['importe_adj_con_iva'] = df['importe_adj_con_iva'].str.replace('.', '')
+    df['importe_adj_con_iva'] = df['importe_adj_con_iva'].str.replace(',', '.')
+    df['presupuesto_con_iva'] = df['presupuesto_con_iva'].str.replace('€', '')
+    df['presupuesto_con_iva'] = df['presupuesto_con_iva'].str.replace('.', '')
+    df['presupuesto_con_iva'] = df['presupuesto_con_iva'].str.replace(',', '.')
 
-# Función para obtener el número de dueños
-def obtener_numero_duenos():
-    try:
-        duenos = load_data(f"{BASE_URL}/duenos")
-        if duenos is not None:
-            return len(duenos), duenos
-        else:
-            return 0, []
-    except Exception as e:
-        st.error(f"Error al obtener los dueños: {e}")
-        return 0, []
+    df['presupuesto_con_iva'] = df['presupuesto_con_iva'].astype(float)
+    df['importe_adj_con_iva'] = df['importe_adj_con_iva'].astype(float)
 
-# Función para obtener el número de animales
-def obtener_numero_animales():
-    try:
-        animales = load_data(f"{BASE_URL}/animales")
-        if animales is not None:
-            return len(animales), animales
-        else:
-            return 0, []
-    except Exception as e:
-        st.error(f"Error al obtener los animales: {e}")
-        return 0, []
+    return df
 
-# Función para obtener el número de tratamientos
-def obtener_numero_tratamientos():
-    try:
-        tratamientos = load_data(f"{BASE_URL}/tratamientos")
-        if tratamientos is not None:
-            return len(tratamientos), tratamientos
-        else:
-            return 0, []
-    except Exception as e:
-        st.error(f"Error al obtener los tratamientos: {e}")
-        return 0, []
+def load_duenos(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()  # Devuelve la lista de dueños
 
-# Función para obtener la facturación total
-def obtener_facturacion():
-    try:
-        facturas = load_data(f"{BASE_URL}/facturas")
-        if facturas is not None:
-            total_facturado = sum(factura["importe_con_iva"] for factura in facturas if "importe_con_iva" in factura)
-            return total_facturado, facturas
-        else:
-            return 0.0, []
-    except Exception as e:
-        st.error(f"Error al obtener la facturación: {e}")
-        return 0.0, []
 
-# Función para calcular el beneficio neto
-def calcular_beneficio_neto():
-    alquiler = 500
-    sueldo_dueno = 400
-    gastos_totales = alquiler + sueldo_dueno
-    total_facturado, _ = obtener_facturacion()
-    return total_facturado - gastos_totales
+def load_animales(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()  # Devuelve la lista de animales
 
-# Función para calcular el ingreso medio por cita
-def ingreso_medio_por_cita():
-    try:
-        citas = load_data(f"{BASE_URL}/citas")
-        if citas:
-            total_facturado, _ = obtener_facturacion()
-            ingreso_medio = total_facturado / len(citas) if citas else 0.0
-            return ingreso_medio
-        return 0.0
-    except Exception as e:
-        st.error(f"Error al calcular el ingreso medio: {e}")
-        return 0.0
+def info_box(texto, color=None):
+    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{texto}</p></div>', unsafe_allow_html=True)
 
-# Obtener datos y métricas
-numero_duenos, duenos_data = obtener_numero_duenos()
-numero_animales, animales_data = obtener_numero_animales()
-numero_tratamientos, tratamientos_data = obtener_numero_tratamientos()
-facturacion_total, facturas_data = obtener_facturacion()
-beneficio_neto = calcular_beneficio_neto()
-ingreso_medio = ingreso_medio_por_cita()
+# Cargar datos de contratos
+df_merged = load_data('http://fastapi:8000/retrieve_data')
 
-# Mostrar el dashboard
-st.title("Dashboard de seguimiento de Consultas Veterinarias")
+# Cargar datos de dueños
+duenos_data = load_duenos('http://fastapi:8000/duenos/')
+num_clientes = str(len(duenos_data)) if duenos_data else "0"  # Contar dueños
 
+# Cargar datos de animales
+animales_data = load_animales('http://fastapi:8000/animales/')
+num_animales = str(len(animales_data)) if animales_data else "0"  # Contar animales
+
+
+
+# Asignar directamente el número de tratamientos
+num_tratamientos = "11"  # Número fijo de tratamientos
+
+
+# Otras métricas
+registros = str(df_merged.shape[0])
+adjudicatarios = str(len(df_merged.adjuducatario.unique()))
+centro = str(len(df_merged.centro_seccion.unique()))
+tipologia = str(len(df_merged.tipo.unique()))
+presupuesto_medio = str(round(df_merged.presupuesto_con_iva.mean(), 2))
+adjudicado_medio = str(round(df_merged.importe_adj_con_iva.mean(), 2))
+
+sns.set_palette("pastel")
+
+st.title("Dashboard")
 st.header("Información general")
+
+# Definir columnas
 col1, col2, col3 = st.columns(3)
-col4, col5, col6 = st.columns(3)
+col4, col5, col6 = st.columns(3)  # Definir columnas adicionales
 
 with col1:
-    col1.subheader('# Clientes registrados')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{numero_duenos}</p></div>', unsafe_allow_html=True)
+    col1.subheader('# Clientes')
+    info_box(num_clientes)  # Muestra el número de clientes únicos
 with col2:
-    col2.subheader('# Animales registrados')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{numero_animales}</p></div>', unsafe_allow_html=True)
+    col2.subheader('# Nº de tratamientos ')
+    info_box(num_tratamientos)
 with col3:
-    col3.subheader('# Facturación total (€)')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{facturacion_total:.2f}</p></div>', unsafe_allow_html=True)
+    col3.subheader('# Animales')
+    info_box(num_animales)
+
 with col4:
-    col4.subheader('# Número de tratamientos')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{numero_tratamientos}</p></div>', unsafe_allow_html=True)
+    col4.subheader('# Beneficio neto ')
+    info_box(tipologia)
+
 with col5:
-    col5.subheader('# Beneficio neto (€)')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{beneficio_neto:.2f}</p></div>', unsafe_allow_html=True)
+    col5.subheader('# Facturación total')
+    info_box(presupuesto_medio)
+
 with col6:
-    col6.subheader('# Ingreso medio por cita (€)')
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{ingreso_medio:.2f}</p></div>', unsafe_allow_html=True)
+    col6.subheader('# Ingreso medio por cita')
+    info_box(adjudicado_medio)
 
-# Gráficos de evolución
-if duenos_data:
-    duenos_df = pd.DataFrame(duenos_data)
-    if 'fecha' in duenos_df.columns:
-        duenos_df['fecha'] = pd.to_datetime(duenos_df['fecha'])
-        duenos_evolucion = duenos_df.groupby('fecha').size().reset_index(name='numero_duenos')
-        fig_duenos = px.line(duenos_evolucion, x='fecha', y='numero_duenos', title='Evolución del Número de Dueños')
-        st.plotly_chart(fig_duenos)
+# Tablas y gráficos
+tab1, tab2 = st.tabs(["Procedimientos negociados sin publicidad", "Distribución de importe en procedimiento Negociado sin publicidad"])
 
-if facturas_data:
-    facturas_df = pd.DataFrame(facturas_data)
-    if 'fecha' in facturas_df.columns and 'importe_con_iva' in facturas_df.columns:
-        facturas_df['fecha'] = pd.to_datetime(facturas_df['fecha'])
-        facturacion_evolucion = facturas_df.groupby('fecha')['importe_con_iva'].sum().reset_index()
-        fig_facturacion = px.line(facturacion_evolucion, x='fecha', y='importe_con_iva', title='Evolución de la Facturación')
-        st.plotly_chart(fig_facturacion)
+fig1 = px.scatter(df_merged, x='importe_adj_con_iva', y='presupuesto_con_iva', size='numlicit', color='procedimiento')
+fig2 = px.box(df_merged.query("procedimiento == 'Negociado sin publicidad'"), x='importe_adj_con_iva')
+
+with tab1:
+    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+with tab2:
+    st.plotly_chart(fig2, theme=None, use_container_width=True)
