@@ -3,6 +3,8 @@ import streamlit as st
 import plotly.express as px
 import requests
 import seaborn as sns
+from datetime import datetime
+import calendar
 
 @st.cache_data
 def load_data(url: str):
@@ -30,7 +32,6 @@ def load_duenos(url: str):
         return None
     return r.json()  # Devuelve la lista de dueños
 
-
 def load_animales(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -39,6 +40,47 @@ def load_animales(url: str):
 
 def info_box(texto, color=None):
     st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{texto}</p></div>', unsafe_allow_html=True)
+
+url_animales = "http://fastapi:8000/animales/"
+
+# Cargar datos de animales desde el backend
+r = requests.get(url_animales)
+if r.status_code == 200:
+    animales_data = r.json()
+    df_animales = pd.DataFrame(animales_data)
+    if "fecha_alta" in df_animales.columns:
+        df_animales["fecha_alta"] = pd.to_datetime(df_animales["fecha_alta"])  # Asegurar datetime
+else:
+    df_animales = pd.DataFrame()  # Si no hay datos, crea un DataFrame vacío
+
+# Detectar mes actual y rango de fechas
+today = datetime.now()
+current_year = today.year
+current_month = today.month
+days_in_month = calendar.monthrange(current_year, current_month)[1]
+
+# Crear un rango completo de fechas para el mes actual
+start_date = datetime(current_year, current_month, 1)
+end_date = datetime(current_year, current_month, days_in_month)
+date_range = pd.date_range(start=start_date, end=end_date)
+df_full_dates = pd.DataFrame(date_range, columns=["fecha"])  # DataFrame con todas las fechas del mes
+
+# Procesar los datos reales
+if not df_animales.empty:
+    df_evolucion = df_animales.groupby(df_animales["fecha_alta"].dt.date).size().reset_index(name="total")
+    df_evolucion.rename(columns={"fecha_alta": "fecha"}, inplace=True)  # Asegurarnos del nombre
+    df_evolucion["fecha"] = pd.to_datetime(df_evolucion["fecha"])  # Convertir a datetime si es necesario
+else:
+    df_evolucion = pd.DataFrame(columns=["fecha", "total"])  # DataFrame vacío si no hay datos
+
+# Combinar el rango completo con los datos reales
+df_full_dates["fecha"] = pd.to_datetime(df_full_dates["fecha"])  # Asegurar datetime
+df_evolucion_full = pd.merge(df_full_dates, df_evolucion, on="fecha", how="left")
+df_evolucion_full["total"] = df_evolucion_full["total"].fillna(0)  # Rellenar días sin datos con 0
+
+st.title("Dashboard")
+
+# GRÁFICO EVOLUCION AQUI
 
 # Cargar datos de contratos
 df_merged = load_data('http://fastapi:8000/retrieve_data')
@@ -51,11 +93,8 @@ num_clientes = str(len(duenos_data)) if duenos_data else "0"  # Contar dueños
 animales_data = load_animales('http://fastapi:8000/animales/')
 num_animales = str(len(animales_data)) if animales_data else "0"  # Contar animales
 
-
-
 # Asignar directamente el número de tratamientos
 num_tratamientos = "11"  # Número fijo de tratamientos
-
 
 # Otras métricas
 registros = str(df_merged.shape[0])
@@ -67,7 +106,6 @@ adjudicado_medio = str(round(df_merged.importe_adj_con_iva.mean(), 2))
 
 sns.set_palette("pastel")
 
-st.title("Dashboard")
 st.header("Información general")
 
 # Definir columnas
@@ -96,13 +134,17 @@ with col6:
     col6.subheader('# Ingreso medio por cita')
     info_box(adjudicado_medio)
 
-# Tablas y gráficos
-tab1, tab2 = st.tabs(["Procedimientos negociados sin publicidad", "Distribución de importe en procedimiento Negociado sin publicidad"])
+# Crear el gráfico EVOLUCIÓN
+st.header(f"Evolución de Altas de Animales en {today.strftime('%B %Y')}")
 
-fig1 = px.scatter(df_merged, x='importe_adj_con_iva', y='presupuesto_con_iva', size='numlicit', color='procedimiento')
-fig2 = px.box(df_merged.query("procedimiento == 'Negociado sin publicidad'"), x='importe_adj_con_iva')
-
-with tab1:
-    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-with tab2:
-    st.plotly_chart(fig2, theme=None, use_container_width=True)
+if not df_evolucion_full.empty:
+    fig = px.line(
+        df_evolucion_full,
+        x="fecha",
+        y="total",
+        labels={"fecha": "Fecha", "total": "Animales dados de alta"},
+        title=f"Evolución del Número de Altas de Animales por Día en {today.strftime('%B %Y')}",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("No hay datos disponibles para mostrar la evolución.")

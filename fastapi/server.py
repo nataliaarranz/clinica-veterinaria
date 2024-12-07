@@ -31,6 +31,7 @@ class Animal(BaseModel):
     especie_animal: str
     nacimiento_animal: date
     sexo: str
+    fecha_alta: Optional[datetime] = None
 
 class Cita(BaseModel):
     id: Optional[int]
@@ -181,6 +182,7 @@ async def buscar_dueno(dni_dueno: str):
             raise HTTPException(status_code=404, detail="Dueño no encontrado.")
         return dueno
     except Exception as e:
+        logging.error(f"Error inesperado al buscar dueño: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 # Endpoints para animales
@@ -209,6 +211,7 @@ async def buscar_animal(chip_animal: str):
 @app.post("/alta_animal/")
 async def alta_animal(data: Animal):
     try:
+        data.fecha_alta = datetime.now()
         animal_repository.add(data)
         return {"message": "Animal registrado correctamente"}
     except Exception as e:
@@ -284,3 +287,4 @@ def get_facturas():
 # Endpoint para enviar formulario
 class FormData(BaseModel):
     date: str
+
