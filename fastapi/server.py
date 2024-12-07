@@ -103,25 +103,24 @@ class DuenoRepository(DataRepository):
         else:
             raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
 
-# Implementación para los Tratamientos:
 class TratamientoRepository(DataRepository):
     def __init__(self, filename: str):
         self.filename = filename
-
-    def get_all(self) -> List[dict]:
-        if os.path.exists(self.filename):
-            df = pd.read_csv(self.filename)
-            return df.to_dict(orient="records")
-        raise HTTPException(status_code=404, detail="No hay tratamientos registrados")
+        if not os.path.exists(self.filename):
+            df = pd.DataFrame(columns=["id", "nombre_tratamiento", "importe_con_iva", "fecha"])
+            df.to_csv(self.filename, index=False)
 
     def add(self, tratamiento: Tratamiento):
-        nuevo_registro = pd.DataFrame([tratamiento.dict()])
+        # Leer el archivo existente para obtener el siguiente ID
         if os.path.exists(self.filename):
             df = pd.read_csv(self.filename)
+            next_id = df['id'].max() + 1 if not df.empty else 1  # Obtener el siguiente ID
+            tratamiento.id = next_id  # Asignar el ID al tratamiento
+            nuevo_registro = pd.DataFrame([tratamiento.dict()])
             df = pd.concat([df, nuevo_registro], ignore_index=True)
+            df.to_csv(self.filename, index=False)
         else:
-            df = nuevo_registro
-        df.to_csv(self.filename, index=False)
+            raise HTTPException(status_code=404, detail="Archivo de tratamientos no encontrado.")
 
 class FacturaRepository(DataRepository):
     def __init__(self, filename: str):
@@ -311,12 +310,31 @@ def get_tratamientos():
         return tratamiento_repository.get_all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener los tratamientos: {str(e)}")
+    
+
+@app.post("/alta_tratamiento/")
+async def alta_tratamiento(data: Tratamiento):
+    try:
+        tratamiento_repository.add(data)
+        return {"message": "Tratamiento registrado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
 # Endpoint para obtener todas las facturas:
 @app.get("/facturas/")
 def get_facturas():
     try:
-        return factura_repository.get_all()
+        df = factura_repository.get_all()
+        # Convertir a DataFrame
+        df_facturas = pd.DataFrame(df)
+        
+        # Asegurarse de que los valores sean válidos
+        df_facturas['importe_con_iva'] = pd.to_numeric(df_facturas['importe_con_iva'], errors='coerce').fillna(0)
+        
+        # Eliminar filas con valores no válidos
+        df_facturas = df_facturas.dropna()
+        
+        return df_facturas.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener las facturas: {str(e)}")
     

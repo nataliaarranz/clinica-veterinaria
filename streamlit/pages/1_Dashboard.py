@@ -5,6 +5,7 @@ import requests
 import seaborn as sns
 from datetime import datetime
 import calendar
+import matplotlib.pyplot as plt
 
 @st.cache_data
 def load_data(url: str):
@@ -130,6 +131,9 @@ else:
 ingreso_promedio_por_cita = facturacion_total_value / num_citas if num_citas > 0 else 0
 
 
+
+
+
 # Otras métricas
 registros = str(df_merged.shape[0])
 adjudicatarios = str(len(df_merged.adjuducatario.unique()))
@@ -182,3 +186,29 @@ if not df_evolucion_full.empty:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("No hay datos disponibles para mostrar la evolución.")
+
+
+
+# Crear el gráfico de relación entre facturación total y número de clientes
+st.header("Relación entre Facturación Total y Número de Clientes")
+
+# Convertir num_clientes a entero para el gráfico
+num_clientes_int = int(num_clientes)
+
+# Crear un DataFrame para el gráfico
+df_relacion = pd.DataFrame({
+    'Número de Clientes': [num_clientes_int],
+    'Facturación Total': [facturacion_total_value]
+})
+
+# Usar Plotly para crear un gráfico de dispersión
+fig = px.scatter(df_relacion, 
+                 x='Número de Clientes', 
+                 y='Facturación Total', 
+                 title='Relación entre Facturación Total y Número de Clientes',
+                 labels={'Número de Clientes': 'Número de Clientes', 'Facturación Total': 'Facturación Total (€)'},
+                 size='Facturación Total',  # Tamaño de los puntos basado en la facturación
+                 hover_name='Facturación Total')  # Mostrar la facturación al pasar el ratón
+
+# Mostrar el gráfico en Streamlit
+st.plotly_chart(fig, use_container_width=True)
