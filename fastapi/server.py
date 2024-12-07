@@ -262,6 +262,14 @@ def eliminar_animal(chip_animal: str):
 citas_db = []
 next_id = 1
 
+
+@app.get("/citas/")
+def get_citas():
+    try:
+        return citas_db  # Devuelve la lista de citas
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las citas: {str(e)}")
+
 @app.post("/citas/", response_model=Cita)
 def crear_cita(cita: Cita):
     global next_id
@@ -325,17 +333,36 @@ async def alta_factura(data: Factura):
 @app.get("/beneficio_neto/")
 def get_beneficio_neto():
     try:
-        # Cargar los datos de contratos
-        df = pd.read_csv('./contratos_inscritos_simplificado_2023.csv', sep=';')
-        df['importe_adj_con_iva'] = df['importe_adj_con_iva'].str.replace('€', '').str.replace('.', '').str.replace(',', '.').astype(float)
-        
+        # Cargar los datos de facturas
+        df_facturas = pd.read_csv('registroFacturas.csv')
+        df_facturas['importe_con_iva'] = df_facturas['importe_con_iva'].astype(float)
+
+        # Definir gastos fijos
+        gastos_fijos = 10  # Gastos fijos por factura
+
         # Calcular el beneficio neto
-        beneficio = beneficio_neto(df)
-        return {"beneficio_neto": beneficio}
+        df_facturas['beneficio_neto'] = df_facturas['importe_con_iva'] - gastos_fijos  # Restar gastos fijos a cada factura
+        beneficio_neto_total = df_facturas['beneficio_neto'].sum()  # Sumar todos los beneficios netos
+
+        return {"beneficio_neto": beneficio_neto_total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular el beneficio neto: {str(e)}")
+    
 
+@app.get("/facturacion_total/")
+def get_facturacion_total():
+    try:
+        # Cargar los datos de facturas
+        df_facturas = pd.read_csv('registroFacturas.csv')
+        df_facturas['importe_con_iva'] = df_facturas['importe_con_iva'].astype(float)
 
+        # Calcular la facturación total
+        facturacion_total = df_facturas['importe_con_iva'].sum()
+
+        return {"facturacion_total": facturacion_total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al calcular la facturación total: {str(e)}")
+    
 # Endpoint para enviar formulario
 class FormData(BaseModel):
     date: str

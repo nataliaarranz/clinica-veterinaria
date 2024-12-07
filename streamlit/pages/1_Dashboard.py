@@ -96,32 +96,39 @@ num_animales = str(len(animales_data)) if animales_data else "0"  # Contar anima
 # Asignar directamente el número de tratamientos
 num_tratamientos = "11"  # Número fijo de tratamientos
 
-
 # Llamar al endpoint para obtener el beneficio neto
-r = requests.get('http://fastapi:8000/beneficio_neto/')
-print(f"Status Code: {r.status_code}")  # Imprimir el código de estado
-print(f"Response: {r.text}")  # Imprimir la respuesta en texto
+beneficio_neto_url = "http://fastapi:8000/beneficio_neto/"
+r_beneficio = requests.get(beneficio_neto_url)
 
-if r.status_code == 200:
-    beneficio_neto_value = r.json().get("beneficio_neto")
-    
-    # Imprimir el valor y su tipo para depuración
-    print(f"Valor recibido: {beneficio_neto_value}, Tipo: {type(beneficio_neto_value)}")
-    
-    # Asegúrate de que el valor sea un número
-    try:
-        if beneficio_neto_value is not None and beneficio_neto_value != "":
-            beneficio_neto_value = float(beneficio_neto_value)  # Convertir a float
-        else:
-            beneficio_neto_value = 0.0  # Valor predeterminado si no hay datos
-    except (ValueError, TypeError) as e:
-        print(f"Error al convertir a float: {e}")
-        beneficio_neto_value = 0.0  # O manejar el error de otra manera
+if r_beneficio.status_code == 200:
+    beneficio_neto_value = r_beneficio.json().get("beneficio_neto", 0)
 else:
-    print(f"Error al obtener el beneficio neto: {r.status_code}")
-    beneficio_neto_value = 0.0
-#Calcular facturación total
-facturacion_total = df_merged['importe_adj_con_iva'].sum()
+    beneficio_neto_value = 0  # Si no se puede obtener el beneficio, establecer en 0
+
+
+# Llamar al endpoint para obtener la facturación total
+facturacion_total_url = "http://fastapi:8000/facturacion_total/"
+r_facturacion = requests.get(facturacion_total_url)
+
+if r_facturacion.status_code == 200:
+    facturacion_total_value = r_facturacion.json().get("facturacion_total", 0)
+else:
+    facturacion_total_value = 0  # Si no se puede obtener la facturación, establecer en 0
+
+
+# Cargar datos de citas
+citas_url = "http://fastapi:8000/citas/"
+r_citas = requests.get(citas_url)
+
+if r_citas.status_code == 200:
+    citas_data = r_citas.json()
+    num_citas = len(citas_data)  # Número total de citas
+else:
+    num_citas = 0  # Si no se puede obtener, establecer en 0
+
+# Calcular ingreso promedio por cita
+ingreso_promedio_por_cita = facturacion_total_value / num_citas if num_citas > 0 else 0
+
 
 # Otras métricas
 registros = str(df_merged.shape[0])
@@ -140,26 +147,26 @@ col1, col2, col3 = st.columns(3)
 col4, col5, col6 = st.columns(3)  # Definir columnas adicionales
 
 with col1:
-    col1.subheader('# Clientes')
+    col1.subheader('Clientes')
     info_box(num_clientes)  # Muestra el número de clientes únicos
 with col2:
-    col2.subheader('# Nº de tratamientos ')
+    col2.subheader('Nº de tratamientos ')
     info_box(num_tratamientos)
 with col3:
-    col3.subheader('# Animales')
+    col3.subheader('Animales')
     info_box(num_animales)
 
 with col4:
-    col4.subheader('# Beneficio neto')
+    col4.subheader('Beneficio neto')
     info_box(f'{beneficio_neto_value:,.2f} €')  # Asegúrate de que el valor sea un número
 
-
 with col5:
-    col5.subheader('# Facturación total')
-    info_box(facturacion_total) #Muestra la facturación total
+    col5.subheader('Facturación total')
+    info_box(f'{facturacion_total_value:,.2f} €')
+
 with col6:
-    col6.subheader('# Ingreso medio por cita')
-    info_box(adjudicado_medio)
+    col6.subheader('Ingreso medio por cita')
+    info_box(f'{ingreso_promedio_por_cita:,.2f} €')
 
 # Crear el gráfico EVOLUCIÓN
 st.header(f"Evolución de Altas de Animales en {today.strftime('%B %Y')}")
