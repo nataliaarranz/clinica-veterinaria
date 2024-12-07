@@ -1,6 +1,30 @@
 import streamlit as st
 import requests
 from datetime import datetime
+import os
+import pandas as pd
+
+
+
+
+class FacturaRepository:
+    def __init__(self, filename: str):
+        self.filename = filename
+
+    def get_all(self):
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            return df.to_dict(orient="records")
+        return []
+
+    def add(self, factura):
+        nuevo_registro = pd.DataFrame([factura])
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            df = pd.concat([df, nuevo_registro], ignore_index=True)
+        else:
+            df = nuevo_registro
+        df.to_csv(self.filename, index=False)
 
 # Clase para manejar la lógica de los dueños
 class DuenoService:
@@ -44,13 +68,14 @@ class Factura:
         self.tratamiento = tratamiento
         self.precio_sin_iva = precio_sin_iva
         self.iva = 0.21  # IVA del 21%
+        self.fecha = datetime.now()  # Agregar la fecha aquí
 
     def precio_con_iva(self):
         return self.precio_sin_iva * (1 + self.iva)
 
     def mostrar_factura(self):
         st.subheader("Factura de Consulta Veterinaria")
-        st.write(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        st.write(f"Fecha: {self.fecha.strftime('%Y-%m-%d %H:%M:%S')}")
         st.write(f"Nombre del Dueño: {self.nombre_dueno}")
         st.write(f"Nombre del Animal: {self.nombre_animal}")
         st.write("Tratamiento realizado:")
@@ -62,11 +87,30 @@ class Factura:
         st.write("Ubicación: Paseo de la Castellana, 14")
         st.write("Teléfono: 912457890")
 
-# Clase para manejar el registro de consultas
+    # En el método guardar_factura
+    def guardar_factura(self, repository):
+        # Crear un diccionario con los datos de la factura
+        factura_data = {
+            "nombre_dueno": self.nombre_dueno,
+            "nombre_animal": self.nombre_animal,
+            "tratamiento": self.tratamiento,
+            "importe_con_iva": self.precio_con_iva(),  # Aquí se llama al método
+            "fecha": self.fecha.strftime('%Y-%m-%d %H:%M:%S')  # Formato de fecha
+        }
+        
+        # Hacer una solicitud POST al servidor para guardar la factura
+        response = requests.post("http://fastapi:8000/alta_factura/", json=factura_data)
+        
+        if response.status_code == 200:
+            st.success("Factura guardada exitosamente.")
+        else:
+            st.error(f"Error al guardar la factura: {response.text}")
+
 class Consulta:
-    def __init__(self, dueno_service, animal_service):
+    def __init__(self, dueno_service, animal_service, factura_repository):
         self.dueno_service = dueno_service
         self.animal_service = animal_service
+        self.factura_repository = factura_repository  # Agregar el repositorio de facturas
         self.tratamientos = {
             "Análisis": 15,
             "Vacunación": 15,
@@ -100,15 +144,16 @@ class Consulta:
         tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(self.tratamientos.keys()))
         precio_sin_iva = self.tratamientos[tratamiento_seleccionado]
 
-        # Botón para generar la factura
         if st.button("Generar Factura"):
             if nombre_dueno and nombre_animal and tratamiento_seleccionado:
                 factura = Factura(nombre_dueno, nombre_animal, tratamiento_seleccionado, precio_sin_iva)
                 factura.mostrar_factura()
+                
+                # Guardar la factura en el repositorio
+                factura.guardar_factura(self.factura_repository)
+                st.success("Factura guardada exitosamente.")
             else:
                 st.error("Por favor, completa todos los campos.")
-
-# Inicialización de servicios y la aplicación
 def main():
     # URL del microservicio FastAPI
     animales_backend = "http://fastapi:8000/animales"
@@ -118,8 +163,11 @@ def main():
     dueno_service = DuenoService(duenos_backend)
     animal_service = AnimalService(animales_backend)
 
+    # Crear instancia del repositorio de facturas
+    factura_repository = FacturaRepository("registroFacturas.csv")
+
     # Crear instancia de la clase Consulta
-    consulta = Consulta(dueno_service, animal_service)
+    consulta = Consulta(dueno_service, animal_service, factura_repository)
 
     # Llamar a la función para registrar la consulta y generar la factura
     consulta.registrar_consulta()

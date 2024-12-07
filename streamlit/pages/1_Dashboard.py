@@ -96,6 +96,33 @@ num_animales = str(len(animales_data)) if animales_data else "0"  # Contar anima
 # Asignar directamente el número de tratamientos
 num_tratamientos = "11"  # Número fijo de tratamientos
 
+
+# Llamar al endpoint para obtener el beneficio neto
+r = requests.get('http://fastapi:8000/beneficio_neto/')
+print(f"Status Code: {r.status_code}")  # Imprimir el código de estado
+print(f"Response: {r.text}")  # Imprimir la respuesta en texto
+
+if r.status_code == 200:
+    beneficio_neto_value = r.json().get("beneficio_neto")
+    
+    # Imprimir el valor y su tipo para depuración
+    print(f"Valor recibido: {beneficio_neto_value}, Tipo: {type(beneficio_neto_value)}")
+    
+    # Asegúrate de que el valor sea un número
+    try:
+        if beneficio_neto_value is not None and beneficio_neto_value != "":
+            beneficio_neto_value = float(beneficio_neto_value)  # Convertir a float
+        else:
+            beneficio_neto_value = 0.0  # Valor predeterminado si no hay datos
+    except (ValueError, TypeError) as e:
+        print(f"Error al convertir a float: {e}")
+        beneficio_neto_value = 0.0  # O manejar el error de otra manera
+else:
+    print(f"Error al obtener el beneficio neto: {r.status_code}")
+    beneficio_neto_value = 0.0
+#Calcular facturación total
+facturacion_total = df_merged['importe_adj_con_iva'].sum()
+
 # Otras métricas
 registros = str(df_merged.shape[0])
 adjudicatarios = str(len(df_merged.adjuducatario.unique()))
@@ -123,13 +150,13 @@ with col3:
     info_box(num_animales)
 
 with col4:
-    col4.subheader('# Beneficio neto ')
-    info_box(tipologia)
+    col4.subheader('# Beneficio neto')
+    info_box(f'{beneficio_neto_value:,.2f} €')  # Asegúrate de que el valor sea un número
+
 
 with col5:
     col5.subheader('# Facturación total')
-    info_box(presupuesto_medio)
-
+    info_box(facturacion_total) #Muestra la facturación total
 with col6:
     col6.subheader('# Ingreso medio por cita')
     info_box(adjudicado_medio)

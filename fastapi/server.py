@@ -43,6 +43,9 @@ class Cita(BaseModel):
 
 class Factura(BaseModel):
     id: Optional[int]
+    nombre_dueno: str
+    nombre_animal: str
+    tratamiento: str
     importe_con_iva: float
     fecha: datetime
 
@@ -56,6 +59,21 @@ class DataRepository:
 
     def delete(self, identifier: str):
         raise NotImplementedError
+    
+def beneficio_neto(df):
+    if df is None or 'importe_adj_con_iva' not in df.columns:
+        return "Error al cargar los contratos."
+    
+    # Calcular ingresos
+    ingresos_totales = df['importe_adj_con_iva'].sum()
+    
+    # Definir gastos fijos
+    material_consulta = 10
+    gastos_totales = material_consulta
+    
+    # Calcular beneficio neto
+    beneficio_neto = ingresos_totales - gastos_totales
+    return beneficio_neto
 
 # Implementación para Dueños
 class DuenoRepository(DataRepository):
@@ -105,7 +123,6 @@ class TratamientoRepository(DataRepository):
             df = nuevo_registro
         df.to_csv(self.filename, index=False)
 
-# Implementación para las Facturas:
 class FacturaRepository(DataRepository):
     def __init__(self, filename: str):
         self.filename = filename
@@ -116,6 +133,17 @@ class FacturaRepository(DataRepository):
             return df.to_dict(orient="records")
         raise HTTPException(status_code=404, detail="No hay facturas registradas")
 
+    def add(self, factura: dict):
+        nuevo_registro = pd.DataFrame([factura])
+        if os.path.exists(self.filename):
+            df = pd.read_csv(self.filename)
+            df = pd.concat([df, nuevo_registro], ignore_index=True)
+        else:
+            df = nuevo_registro
+        df.to_csv(self.filename, index=False)
+
+# Inicialización del repositorio de facturas
+factura_repository = FacturaRepository("registroFacturas.csv")
 # Implementación para Animales
 class AnimalRepository(DataRepository):
     def __init__(self, filename: str):
@@ -283,6 +311,30 @@ def get_facturas():
         return factura_repository.get_all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener las facturas: {str(e)}")
+    
+@app.post("/alta_factura/")
+async def alta_factura(data: Factura):
+    try:
+        # Agregar la factura al repositorio
+        factura_repository.add(data.dict())  # Asegúrate de convertir a dict
+        return {"message": "Factura registrada correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar la factura: {e}")
+    
+# Endpoint para el beneficio 
+@app.get("/beneficio_neto/")
+def get_beneficio_neto():
+    try:
+        # Cargar los datos de contratos
+        df = pd.read_csv('./contratos_inscritos_simplificado_2023.csv', sep=';')
+        df['importe_adj_con_iva'] = df['importe_adj_con_iva'].str.replace('€', '').str.replace('.', '').str.replace(',', '.').astype(float)
+        
+        # Calcular el beneficio neto
+        beneficio = beneficio_neto(df)
+        return {"beneficio_neto": beneficio}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al calcular el beneficio neto: {str(e)}")
+
 
 # Endpoint para enviar formulario
 class FormData(BaseModel):
