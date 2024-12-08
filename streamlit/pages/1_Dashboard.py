@@ -202,13 +202,17 @@ df_relacion = pd.DataFrame({
 })
 
 # Usar Plotly para crear un gráfico de dispersión
-fig = px.scatter(df_relacion, 
-                 x='Número de Clientes', 
-                 y='Facturación Total', 
-                 title='Relación entre Facturación Total y Número de Clientes',
-                 labels={'Número de Clientes': 'Número de Clientes', 'Facturación Total': 'Facturación Total (€)'},
-                 size='Facturación Total',  # Tamaño de los puntos basado en la facturación
-                 hover_name='Facturación Total')  # Mostrar la facturación al pasar el ratón
-
-# Mostrar el gráfico en Streamlit
-st.plotly_chart(fig, use_container_width=True)
+if not df_relacion.empty:
+    fig = px.scatter(
+        df_relacion, 
+        x='Número de Clientes', 
+        y='Facturación Total', 
+        title='Relación entre Facturación Total y Número de Clientes',
+        labels={'Número de Clientes': 'Número de Clientes', 'Facturación Total': 'Facturación Total (€)'},
+        size='Facturación Total',  # Tamaño de los puntos basado en la facturación
+        hover_name='Facturación Total'
+    )  # Mostrar la facturación al pasar el ratón
+    # Mostrar el gráfico en Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("No hay datos disponibles para mostrar la relación entre clientes y facturación total.")
