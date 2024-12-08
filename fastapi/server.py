@@ -1,9 +1,11 @@
 import os
 import pandas as pd
+import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel as PydanticBaseModel
 from typing import List, Optional
 from datetime import datetime, date
+from data import SessionLocal, engine
 
 app = FastAPI()
 
@@ -32,6 +34,7 @@ class Animal(BaseModel):
     nacimiento_animal: date
     sexo: str
     fecha_alta: Optional[datetime] = None
+    dni_dueno: int
 
 class Cita(BaseModel):
     id: Optional[int]
@@ -180,7 +183,10 @@ factura_repository = FacturaRepository("registroFacturas.csv")
 # Endpoints para dueños
 @app.get("/duenos/")
 def get_duenos():
-    return dueno_repository.get_all()
+    try:
+        return dueno_repository.get_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener dueños: {e}")
 
 @app.post("/alta_duenos/")
 async def alta_dueno(data: Dueno):
@@ -204,7 +210,7 @@ async def dar_baja_dueno(dni_dueno: str):
 async def buscar_dueno(dni_dueno: str): 
     try:
         duenos = dueno_repository.get_all()
-        dueno = next((d for d in duenos if d['dni_dueno'].strip() == dni_dueno.strip()), None)
+        dueno = next((dueno for dueno in duenos if dueno['dni_dueno'].strip() == dni_dueno.strip()), None)
         if dueno is None:
             raise HTTPException(status_code=404, detail="Dueño no encontrado.")
         return dueno
@@ -213,7 +219,6 @@ async def buscar_dueno(dni_dueno: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 # Endpoints para animales
-
 @app.get("/animales/")
 def get_animales():
     try:
@@ -237,12 +242,39 @@ async def buscar_animal(chip_animal: str):
 
 @app.post("/alta_animal/")
 async def alta_animal(data: Animal):
+    db: Session = SessionLocal()
     try:
-        data.fecha_alta = datetime.now()
-        animal_repository.add(data)
-        return {"message": "Animal registrado correctamente"}
+        #Comprobar que el dueño existe
+        dueno = db.query(Dueno).filter(Dueno.dni_dueno == Animal.dni_dueno).first()
+        if not dueno:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado")
+        # Crear un nuevo registro de animal
+        nuevo_animal = Animal(
+            nombre_animal=Animal.nombre_animal,
+            chip_animal=Animal.chip_animal,
+            especie_animal=Animal.especie_animal,
+            nacimiento_animal=Animal.nacimiento_animal,
+            sexo=Animal.sexo,
+            dni_dueno=Animal.dni_dueno  # Relacionar con el dueño
+        )
+
+        # Agregar el nuevo animal a la base de datos
+        db.add(nuevo_animal)
+        db.commit()  # Guardar los cambios
+        db.refresh(nuevo_animal)  # Obtener el objeto actualizado con el ID asignado
+
+        return {"message": "Animal registrado correctamente", "animal_id": nuevo_animal.id_animal}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+        db.rollback()  # Revertir cambios en caso de error
+        raise HTTPException(status_code=500, detail=f"Error al registrar el animal: {str(e)}")
+    finally:
+        db.close()
+    #try:
+    #    data.fecha_alta = datetime.now()
+    #    animal_repository.add(data)
+    #    return {"message": "Animal registrado correctamente"}
+    #except Exception as e:
+    #   raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
 @app.delete("/animales/{chip_animal}")
 def eliminar_animal(chip_animal: str):
