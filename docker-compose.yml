@@ -1,7 +1,6 @@
 services:
-  
   fastapi:
-    build: clinica_fastapi/
+    build: fastapi/
     ports:
       - 8000:8000
     networks:

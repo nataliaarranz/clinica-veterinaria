@@ -63,7 +63,7 @@ class FormularioAnimales:
     def crear_formulario(self):
         st.title("Registro de Animales🐾")
         # Cargar datos de dueños
-        duenos_data = ('http://fastapi:8000/duenos/')
+        duenos_data = ('http://clinica_fastapi:8000/duenos/')
         
         #Obtener la lista de dueños
         response = requests.get(duenos_data)

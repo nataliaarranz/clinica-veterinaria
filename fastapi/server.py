@@ -6,7 +6,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from typing import List, Optional
 from datetime import datetime, date
 #from data import SessionLocal, engine
-from clinica_fastapi.data import *
+from data import *
 
 app = FastAPI()
 DATBASE_URL = "sqlite:///clinica_veterinaria.db"
