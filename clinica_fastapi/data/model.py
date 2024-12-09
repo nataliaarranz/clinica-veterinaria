@@ -31,7 +31,7 @@ class Animal(Base):
     especie_animal = Column(String, nullable=False)
     nacimiento_animal = Column(Date, nullable=False)
     sexo_animal = Column(String, nullable=False)
-    id_dueno = Column(Integer, ForeignKey('Duenos.id_dueno'), nullable=False)
+    dni_dueno = Column(Integer, ForeignKey('Duenos.dni_dueno'), nullable=False)
     
     # Relaciones
     dueno = relationship("Dueno", back_populates="animales")
@@ -42,7 +42,7 @@ class Animal(Base):
 class Factura(Base):
     __tablename__ = 'Facturas'
     id_factura = Column(Integer, primary_key=True, autoincrement=True)
-    id_dueno = Column(Integer, ForeignKey('Duenos.id_dueno'), nullable=False)
+    dni_dueno = Column(Integer, ForeignKey('Duenos.id_dueno'), nullable=False)
     id_animal = Column(Integer, ForeignKey('Animales.id_animal'), nullable=False)
     tratamiento = Column(Text, nullable=False)
     fecha_factura = Column(Date, nullable=False)
@@ -66,7 +66,7 @@ class Cita(Base):
     __tablename__ = 'citas'
 
     id_cita = Column(Integer, primary_key=True, autoincrement=True)
-    id_dueno = Column(Integer, ForeignKey('Duenos.id_dueno'), nullable=False)
+    dni_dueno = Column(Integer, ForeignKey('Duenos.id_dueno'), nullable=False)
     id_animal = Column(Integer, ForeignKey('Animales.id_animal'), nullable=False)
     #nombre_animal = Column(String, nullable=False)
     #nombre_dueno = Column(String, nullable=False)

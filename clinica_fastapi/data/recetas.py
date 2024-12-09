@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 metadata = Base.metadata
 
-#sqlacodegen sqlite:///recetas.db
+#sqlacodegen sqlite:///clinica-veterinaria.db 
 
 class Ingrediente(Base):
     __tablename__ = 'ingrediente'

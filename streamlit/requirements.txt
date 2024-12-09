@@ -59,10 +59,13 @@ six==1.16.0
 smmap==5.0.1
 streamlit==1.38.0
 streamlit-calendar==1.2.0
+sqlacodegen==2.3.0.post1
+SQLAlchemy==1.4.39
 tenacity==8.5.0
 toml==0.10.2
 tornado==6.4.1
 typing_extensions==4.12.2
 tzdata==2024.1
 urllib3==2.2.2
+uvicorn==0.32.1
 watchdog==4.0.2

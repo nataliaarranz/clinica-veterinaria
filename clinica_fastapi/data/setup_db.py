@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS Facturas(
     tratamiento TEXT NOT NULL,
     fecha_factura TEXT NOT NULL,
     precio_sin_iva REAL NOT NULL,
-    precio_con_iva REAL NOT NULL,
+    precio_con_iva REAL NOT NULL
 );
 """)
 
