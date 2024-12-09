@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 RUN mkdir /streamlit
 
-COPY requirements.txt /clinica_fastapi
+COPY requirements.txt /streamlit
 
 WORKDIR /streamlit
 
