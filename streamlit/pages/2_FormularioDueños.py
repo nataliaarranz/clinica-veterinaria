@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import re
+import time
 
 # Clase para representar a un dueno
 class Dueno:
@@ -72,10 +73,33 @@ def crear_formulario_duenos():
             if error:
                 st.error(error)
             else:
+                # Crear un contenedor vacío para la animación
+                with st.empty():
+                    # Animación de carga
+                    for i in range(5):
+                        if i == 0:
+                            st.write("👤 Registrando dueño...")
+                        elif i == 1:
+                            st.write("👤👤 Verificando datos...")
+                        elif i == 2:
+                            st.write("👤👤👤 Guardando en la base de datos...")
+                        elif i == 3:
+                            st.write("👤👤👤👤 Casi listo...")
+                        else:
+                            st.write("👤👤👤👤👤 ¡Completado!")
+                        time.sleep(0.5)
+
                 response = dueno_service.guardar_datos(dueno)
                 if response is not None and response.status_code == 200:
-                    st.success("Datos enviados correctamente")
-                    st.json(response.json())  # Mostrar la respuesta del microservicio
+                    # Animación de éxito
+                    success_placeholder = st.empty()
+                    for emoji in ["🎉", "🌟", "✨", "🎊", "🏆"]:
+                        success_placeholder.markdown(f"### {emoji} ¡Dueño registrado con éxito! {emoji}")
+                        time.sleep(0.3)
+                    
+                    # Mensaje final
+                    st.success("¡Registro completado correctamente!")
+                    st.json(response.json())
                 else:
                     error_message = "Error de conexión" if response is None else response.json().get("detail", "Error desconocido")
                     st.error(f"Error al enviar los datos: {error_message}")

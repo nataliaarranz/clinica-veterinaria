@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import re
 from datetime import datetime
+import time
 
 # URL del microservicio FastAPI
 url = "http://fastapi:8000/alta_animal"
@@ -63,13 +64,13 @@ class FormularioAnimales:
     def crear_formulario(self):
         st.title("Registro de Animales🐾")
         # Cargar datos de dueños
-        duenos_data = ('http://clinica_fastapi:8000/duenos/')
+        duenos_data = 'http://fastapi:8000/duenos/'
         
-        #Obtener la lista de dueños
+        # Obtener la lista de dueños
         response = requests.get(duenos_data)
         if response.status_code == 200:
             duenos = response.json()
-            #Crear un diccionario con todos los dueños
+            # Crear un diccionario con todos los dueños
             duenos_dict = {dueno['dni_dueno']: dueno['nombre_dueno'] 
                        for dueno in duenos
                        if 'dni_dueno' in dueno and 'nombre_dueno' in dueno}
@@ -78,7 +79,6 @@ class FormularioAnimales:
             st.error("Error al obtener los dueños.")
             duenos_dict={}
 
-        
         with st.form("registro_animales"):
             st.subheader("Datos del animal")
             nombre_animal = st.text_input("Nombre del animal: ", max_chars=50)
@@ -88,17 +88,16 @@ class FormularioAnimales:
             sexo_animal = st.selectbox("Sexo del animal: ", ["Macho", "Hembra"])
             dueno_seleccionado = st.selectbox("Selecciona el dueño:", options = list(duenos_dict.values()))
             
-        
-            #Botón dar de alta
+            # Botón dar de alta
             submit_button = st.form_submit_button(label="Dar de alta animal")
             
             if submit_button:
-                #Obtener el ID del dueño seleccionado
+                # Obtener el ID del dueño seleccionado
                 dni_dueno = next((key for key, value in duenos_dict.items() if value == dueno_seleccionado), None)
                 if dni_dueno is None:
                     st.error("No se ha seleccionado un dueño.")
                 else:
-                    #Procesar formulario
+                    # Procesar formulario
                     self.procesar_formulario(nombre_animal, chip_animal, especie_animal, nacimiento_animal.strftime("%Y-%m-%d"), sexo_animal, dni_dueno)
 
     def procesar_formulario(self, nombre, chip, especie, nacimiento, sexo, dni_dueno):
@@ -108,6 +107,21 @@ class FormularioAnimales:
         if error:
             st.error(error)
         else:
+            # Crear un contenedor vacío para la animación
+            with st.empty():
+                # Animación de carga
+                for i in range(5):
+                    if i == 0:
+                        st.write("🐾 Registrando animal...")
+                    elif i == 1:
+                        st.write("🐾🐾 Verificando datos...")
+                    elif i == 2:
+                        st.write("🐾🐾🐾 Guardando datos...")
+                    elif i == 3:
+                        st.write("🐾🐾🐾🐾 Guardando datos...")
+                    elif i == 4:
+                        st.write("🐾🐾🐾🐾🐾 Guardando datos...")
+
             response = self.animal_service.guardar_datos(animal)
             if response is not None and response.status_code == 200:
                 st.success("Datos enviados correctamente")

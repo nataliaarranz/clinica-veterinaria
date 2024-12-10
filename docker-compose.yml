@@ -1,29 +1,22 @@
+version: '3'
+
 services:
-  fastapi:
-    build: fastapi/
-    ports:
-      - 8000:8000
-    networks:
-      - deploy_network
-    container_name: fastapi
-    environment:
-      - DATABASE_URL="sqlite:///./clinica_veterinaria.db"
-    volumes:
-      - ./database:/app/database
   streamlit:
-    build: streamlit/
+    build: ./streamlit
+    ports:
+      - "8501:8501"
+    networks:
+      - clinica-network
     depends_on:
       - fastapi
+
+  fastapi:
+    build: ./fastapi
     ports:
-        - 8501:8501
+      - "8000:8000"
     networks:
-      - deploy_network
-    container_name: streamlit
-    volumes:
-      - mis_datos:/var/lib/docker/volumes/aa-streamlit-fastapi_mis_datos/_data
+      - clinica-network
+
 networks:
-  deploy_network:
+  clinica-network:
     driver: bridge
-    
-volumes:
-   mis_datos:

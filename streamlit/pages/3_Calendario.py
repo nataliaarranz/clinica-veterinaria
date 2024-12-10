@@ -1,6 +1,7 @@
 import requests
 import streamlit as st
 from streamlit_calendar import calendar
+import time
 
 # Clase para manejar la lógica de las citas
 class CitaService:
@@ -101,6 +102,15 @@ class CitaInterface:
 
         if submitted:
             self._procesar_registro_cita(nombre_animal, nombre_dueno, tratamiento)
+    
+    def obtener_color_tratamiento(self, tratamiento):
+        tratamientos_colores = {
+            "Analisis": "#FF4B4B",
+            "Vacunacion": "#FF4B4B",
+            "Desparasitacion": "#FF4B4B",
+            "Revision general": "#FF4B4B",
+        }
+        return tratamientos_colores.get(tratamiento, "#FF4B4B")  # Color por defecto si no se encuentra
 
     def _procesar_registro_cita(self, nombre_animal, nombre_dueno, tratamiento):
         if "time_inicial" in st.session_state:
@@ -120,12 +130,12 @@ class CitaInterface:
                 else:
                     data = {
                         "nombre_animal": nombre_animal,
-                                                "nombre_dueno": nombre_dueno,
+                        "nombre_dueno": nombre_dueno,
                         "tratamiento": tratamiento,
                         "fecha_inicio": st.session_state["time_inicial"],
                         "fecha_fin": st.session_state["time_final"],
-                        "backgroundColor": "#FF4B4B",  # Color de fondo del evento
-                        "borderColor": "#FF4B4B"       # Color del borde del evento
+                        "backgroundColor": self.obtener_color_tratamiento(tratamiento),  # Color dinámico
+                        "borderColor": self.obtener_color_tratamiento(tratamiento)      # Color dinámico
                     }
                     response = self.cita_service.send(data)
                     if isinstance(response, dict) and "id" in response:
