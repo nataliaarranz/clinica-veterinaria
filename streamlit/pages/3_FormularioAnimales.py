@@ -62,7 +62,23 @@ class FormularioAnimales:
         self.animal_service = AnimalService(url)
 
     def crear_formulario(self):
-        st.title("Registro de Animales🐾")
+        # Título con el nuevo formato
+        st.markdown("""
+            <div style='background: linear-gradient(120deg, #2B4162 0%, #12100E 100%); 
+                        padding: 2rem; 
+                        border-radius: 10px; 
+                        margin-bottom: 2rem;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
+                <h1 style='color: white; 
+                           font-size: 2.2rem; 
+                           margin-bottom: 0.5rem; 
+                           text-align: center;
+                           font-weight: 600;'>
+                    🐾Sistema de Registro de Animales🐾
+                </h1>
+            </div>
+        """, unsafe_allow_html=True)
+
         # Cargar datos de dueños
         duenos_data = 'http://fastapi:8000/duenos/'
         
@@ -116,16 +132,20 @@ class FormularioAnimales:
                     elif i == 1:
                         st.write("🐾🐾 Verificando datos...")
                     elif i == 2:
-                        st.write("🐾🐾🐾 Guardando datos...")
+                        st.write("👤👤👤 Guardando en la base de datos...")
                     elif i == 3:
-                        st.write("🐾🐾🐾🐾 Guardando datos...")
-                    elif i == 4:
-                        st.write("🐾🐾🐾🐾🐾 Guardando datos...")
+                        st.write("👤👤👤👤 Casi listo...")
+                    else:
+                        st.write("👤👤👤👤👤 ¡Completado!")
+                    time.sleep(0.5)
 
             response = self.animal_service.guardar_datos(animal)
             if response is not None and response.status_code == 200:
-                st.success("Datos enviados correctamente")
-                st.json(response.json())  # Mostrar la respuesta del microservicio
+                # Animación de éxito
+                    success_placeholder = st.empty()
+                    for emoji in ["🎉", "🌟", "✨", "🎊", "🏆"]:
+                        success_placeholder.markdown(f"### {emoji} ¡Animal registrado con éxito! {emoji}")
+                        time.sleep(0.3)
             else:
                 error_message = "Error de conexión" if response is None else response.text
                 st.error(f"Error al enviar los datos: {error_message}")

@@ -53,16 +53,32 @@ class DuenoService:
             return None  # Devuelve None en caso de error
 
 def crear_formulario_duenos():
-    st.title("Registro de Dueno🐾")
+    # Estilo CSS personalizado
+    st.markdown("""
+         <div style='background: linear-gradient(120deg, #2B4162 0%, #12100E 100%); 
+                    padding: 2rem; 
+                    border-radius: 10px; 
+                    margin-bottom: 2rem;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
+            <h1 style='color: white; 
+                       font-size: 2.2rem; 
+                       margin-bottom: 0.5rem; 
+                       text-align: center;
+                       font-weight: 600;'>
+                🩺Sistema de Registro de Dueños🩺
+            </h1>
+        </div>
+    """, unsafe_allow_html=True)
+
     url = "http://fastapi:8000/alta_duenos"  # Cambia esta URL según tu microservicio
     dueno_service = DuenoService(url)
 
     with st.form("registro_duenos"):
-        st.subheader("Datos del dueno")
-        nombre_dueno = st.text_input("Nombre del dueno: ", max_chars=50)
-        telefono_dueno = st.text_input("Teléfono del dueno: ", max_chars=10)
-        email_dueno = st.text_input("Correo del dueno: ")
-        dni_dueno = st.text_input("DNI del dueno: ", max_chars=10)
+        st.subheader("Datos del dueño")
+        nombre_dueno = st.text_input("Nombre del dueño: ", max_chars=50)
+        telefono_dueno = st.text_input("Teléfono del dueño: ", max_chars=10)
+        email_dueno = st.text_input("Correo del dueño: ")
+        dni_dueno = st.text_input("DNI del dueño: ", max_chars=10)
         direccion_dueno = st.text_input("Domicilio: ")
         submit_button = st.form_submit_button(label="Dar de alta")
 
@@ -96,10 +112,6 @@ def crear_formulario_duenos():
                     for emoji in ["🎉", "🌟", "✨", "🎊", "🏆"]:
                         success_placeholder.markdown(f"### {emoji} ¡Dueño registrado con éxito! {emoji}")
                         time.sleep(0.3)
-                    
-                    # Mensaje final
-                    st.success("¡Registro completado correctamente!")
-                    st.json(response.json())
                 else:
                     error_message = "Error de conexión" if response is None else response.json().get("detail", "Error desconocido")
                     st.error(f"Error al enviar los datos: {error_message}")

@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 import os
 import pandas as pd
+import time
 
 
 
@@ -67,44 +68,115 @@ class Factura:
         self.nombre_animal = nombre_animal
         self.tratamiento = tratamiento
         self.precio_sin_iva = precio_sin_iva
-        self.iva = 0.21  # IVA del 21%
-        self.fecha = datetime.now()  # Agregar la fecha aquí
+        self.iva = 0.21
+        self.fecha = datetime.now()
+        self.numero_factura = self._generar_numero_factura()
+
+    def _generar_numero_factura(self):
+        return f"F{self.fecha.strftime('%Y%m%d%H%M%S')}"
 
     def precio_con_iva(self):
         return self.precio_sin_iva * (1 + self.iva)
 
     def mostrar_factura(self):
-        st.subheader("Factura de Consulta Veterinaria")
-        st.write(f"Fecha: {self.fecha.strftime('%Y-%m-%d %H:%M:%S')}")
-        st.write(f"Nombre del Dueño: {self.nombre_dueno}")
-        st.write(f"Nombre del Animal: {self.nombre_animal}")
-        st.write("Tratamiento realizado:")
-        st.write(f"- {self.tratamiento} - {self.precio_sin_iva:.2f}€ (sin IVA)")
-        st.write(f"- {self.tratamiento} - {self.precio_con_iva():.2f}€ (con IVA)")
-        st.write(f"**Total a Pagar: {self.precio_con_iva():.2f}€**")
-        st.write(f"**Información del Centro**")
-        st.write("Clinica Veterinaria Cuatro Patas")
-        st.write("Ubicación: Paseo de la Castellana, 14")
-        st.write("Teléfono: 912457890")
+        # Primero, mostramos el título de la página
+        st.markdown("""
+            <div style='background: linear-gradient(120deg, #2B4162 0%, #12100E 100%); 
+                        padding: 2rem; 
+                        border-radius: 10px; 
+                        margin-bottom: 2rem;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
+                <h1 style='color: white; 
+                           font-size: 2.2rem; 
+                           margin-bottom: 0.5rem; 
+                           text-align: center;
+                           font-weight: 600;'>
+                    🧾 Factura Clínica Veterinaria 🧾
+                </h1>
+            </div>
+        """, unsafe_allow_html=True)
 
-    # En el método guardar_factura
+        # Luego, creamos un contenedor para la factura
+        with st.container():
+            col1, col2, col3 = st.columns([1, 3, 1])
+            
+            with col2:
+                # Datos de la clínica
+                st.markdown("""
+                    <div style='text-align: center; margin-bottom: 2rem;'>
+                        <h2 style='color: #2B4162; font-size: 1.8rem;'>Clínica Veterinaria Cuatro Patas</h2>
+                        <p style='color: #666;'>
+                            Paseo de la Castellana, 14 • Madrid<br>
+                            Tel: 912457890 • CIF: B12345678
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # Datos del cliente y factura
+                st.markdown(f"""
+                    <div style='display: flex; justify-content: space-between; margin-bottom: 2rem;'>
+                        <div>
+                            <h3 style='color: #2B4162;'>📋 Datos del Cliente</h3>
+                            <p><strong>Cliente:</strong> {self.nombre_dueno}</p>
+                            <p><strong>Paciente:</strong> {self.nombre_animal}</p>
+                        </div>
+                        <div style='text-align: right;'>
+                            <h3 style='color: #2B4162;'>🧾 Factura</h3>
+                            <p><strong>Nº:</strong> {self.numero_factura}</p>
+                            <p><strong>Fecha:</strong> {self.fecha.strftime('%d/%m/%Y %H:%M')}</p>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # Tabla de conceptos
+                st.markdown("<h3 style='color: #2B4162; margin-bottom: 1rem;'>Detalles de la factura</h3>", unsafe_allow_html=True)
+                
+                df = pd.DataFrame({
+                    'Concepto': [self.tratamiento, 'IVA (21%)', 'Total'],
+                    'Importe': [
+                        f"{self.precio_sin_iva:.2f}€",
+                        f"{(self.precio_sin_iva * self.iva):.2f}€",
+                        f"{self.precio_con_iva():.2f}€"
+                    ]
+                })
+                
+                st.dataframe(
+                    df,
+                    hide_index=True,
+                    column_config={
+                        "Concepto": st.column_config.TextColumn("Concepto", width="medium"),
+                        "Importe": st.column_config.TextColumn("Importe", width="small")
+                    }
+                )
+
+                # Mensaje final
+                st.markdown("""
+                    <div style='text-align: center; margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 10px;'>
+                        <small style='color: #666;'>
+                            Esta factura sirve como justificante de pago
+                        </small>
+                    </div>
+                """, unsafe_allow_html=True)
+
     def guardar_factura(self, repository):
-        # Crear un diccionario con los datos de la factura
-        factura_data = {
-            "nombre_dueno": self.nombre_dueno,
-            "nombre_animal": self.nombre_animal,
-            "tratamiento": self.tratamiento,
-            "importe_con_iva": self.precio_con_iva(),  # Aquí se llama al método
-            "fecha": self.fecha.strftime('%Y-%m-%d %H:%M:%S')  # Formato de fecha
-        }
-        
-        # Hacer una solicitud POST al servidor para guardar la factura
-        response = requests.post("http://fastapi:8000/alta_factura/", json=factura_data)
-        
-        if response.status_code == 200:
-            st.success("Factura guardada exitosamente.")
-        else:
-            st.error(f"Error al guardar la factura: {response.text}")
+        with st.spinner("Guardando factura..."):
+            time.sleep(0.5)
+            factura_data = {
+                "numero_factura": self.numero_factura,
+                "nombre_dueno": self.nombre_dueno,
+                "nombre_animal": self.nombre_animal,
+                "tratamiento": self.tratamiento,
+                "importe_sin_iva": self.precio_sin_iva,
+                "importe_con_iva": self.precio_con_iva(),
+                "fecha": self.fecha.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            response = requests.post("http://fastapi:8000/alta_factura/", json=factura_data)
+            
+            if response.status_code == 200:
+                repository.add(factura_data)
+            else:
+                st.error(f"❌ Error al guardar la factura: {response.text}")
 
 class Consulta:
     def __init__(self, dueno_service, animal_service, factura_repository):
@@ -126,34 +198,97 @@ class Consulta:
         }
 
     def registrar_consulta(self):
-        st.title("Registro de Consulta Veterinaria")
+        # Título con estilo mejorado
+        st.markdown("""
+            <div style='background: linear-gradient(120deg, #2B4162 0%, #12100E 100%); 
+                        padding: 2rem; 
+                        border-radius: 10px; 
+                        margin-bottom: 2rem;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
+                <h1 style='color: white; 
+                           font-size: 2.2rem; 
+                           margin-bottom: 0.5rem; 
+                           text-align: center;
+                           font-weight: 600;'>
+                    💉 Registro de Consulta Veterinaria
+                </h1>
+            </div>
+        """, unsafe_allow_html=True)
 
-        # Obtener los datos de dueños y animales
-        duenos = self.dueno_service.obtener_duenos()
-        animales = self.animal_service.obtener_animales()
+        # Contenedor principal
+        with st.container():
+            # Obtener los datos
+            duenos = self.dueno_service.obtener_duenos()
+            animales = self.animal_service.obtener_animales()
 
-        if not duenos or not animales:
-            st.error("No se han podido obtener los datos necesarios.")
-            return
+            if not duenos or not animales:
+                st.error("❌ No se han podido obtener los datos necesarios.")
+                return
 
-        # Selección de dueño y animal
-        nombre_dueno = st.selectbox("Selecciona el dueño:", [dueno["nombre_dueno"] for dueno in duenos])
-        nombre_animal = st.selectbox("Selecciona el animal:", [animal["nombre_animal"] for animal in animales])
+            # Crear columnas para mejor organización
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                    <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;'>
+                        <h3 style='color: #2B4162; margin-bottom: 1rem;'>👤 Información del Cliente</h3>
+                    </div>
+                """, unsafe_allow_html=True)
+                nombre_dueno = st.selectbox(
+                    "Selecciona el dueño:",
+                    [dueno["nombre_dueno"] for dueno in duenos],
+                    key="dueno_select"
+                )
+                nombre_animal = st.selectbox(
+                    "Selecciona el animal:",
+                    [animal["nombre_animal"] for animal in animales],
+                    key="animal_select"
+                )
 
-        # Selección del tratamiento
-        tratamiento_seleccionado = st.selectbox("Selecciona el tipo de tratamiento:", list(self.tratamientos.keys()))
-        precio_sin_iva = self.tratamientos[tratamiento_seleccionado]
-
-        if st.button("Generar Factura"):
-            if nombre_dueno and nombre_animal and tratamiento_seleccionado:
-                factura = Factura(nombre_dueno, nombre_animal, tratamiento_seleccionado, precio_sin_iva)
-                factura.mostrar_factura()
+            with col2:
+                st.markdown("""
+                    <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;'>
+                        <h3 style='color: #2B4162; margin-bottom: 1rem;'>💊 Detalles del Tratamiento</h3>
+                    </div>
+                """, unsafe_allow_html=True)
+                tratamiento_seleccionado = st.selectbox(
+                    "Selecciona el tipo de tratamiento:",
+                    list(self.tratamientos.keys()),
+                    key="tratamiento_select"
+                )
+                precio_sin_iva = self.tratamientos[tratamiento_seleccionado]
                 
-                # Guardar la factura en el repositorio
-                factura.guardar_factura(self.factura_repository)
-                st.success("Factura guardada exitosamente.")
-            else:
-                st.error("Por favor, completa todos los campos.")
+                # Mostrar precio
+                st.markdown(f"""
+                    <div style='background: #e9ecef; 
+                               padding: 1rem; 
+                               border-radius: 8px; 
+                               margin-top: 1rem;
+                               text-align: center;'>
+                        <p style='color: #2B4162; 
+                                 font-size: 1.1rem; 
+                                 margin: 0;'>
+                            Precio sin IVA: <strong>{precio_sin_iva:.2f}€</strong>
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            # Botón centrado con estilo
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button(
+                    "Generar Factura",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    if nombre_dueno and nombre_animal and tratamiento_seleccionado:
+                        with st.spinner("Generando factura..."):
+                            factura = Factura(nombre_dueno, nombre_animal, tratamiento_seleccionado, precio_sin_iva)
+                            factura.mostrar_factura()
+                            factura.guardar_factura(self.factura_repository)
+                    else:
+                        st.error("❌ Por favor, completa todos los campos.")
+
 def main():
     # URL del microservicio FastAPI
     animales_backend = "http://fastapi:8000/animales"

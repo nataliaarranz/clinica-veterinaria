@@ -7,6 +7,63 @@ from datetime import datetime
 import calendar
 import matplotlib.pyplot as plt
 
+# URLs de los servicios backend
+url_animales = "http://fastapi:8000/animales/"
+url_duenos = "http://fastapi:8000/duenos/"
+url_citas = "http://fastapi:8000/citas/"
+url_contratos = "http://fastapi:8000/retrieve_data"
+url_beneficio = "http://fastapi:8000/beneficio_neto/"
+url_facturacion = "http://fastapi:8000/facturacion_total/"
+
+# Configuración de la página
+st.set_page_config(
+    page_title="Dashboard Veterinaria",
+    page_icon="🏥",
+    layout="wide"
+)
+# Función para crear cajas de información con estilo mejorado
+def info_box(texto, icon="📊"):
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #4EBAE1 0%, #3B9AC7 100%);
+                    padding: 1.5rem;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    margin: 0.5rem 0;">
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">{icon}</span>
+                <p style="color: white; 
+                          font-size: 1.8rem;
+                          font-weight: 600;
+                          margin: 0;
+                          text-align: center;">
+                    {texto}
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Título principal con estilo mejorado
+st.markdown("""
+    <div style='background: linear-gradient(120deg, #2B4162 0%, #12100E 100%); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin-bottom: 2rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);'>
+        <h1 style='color: white; 
+                   font-size: 2.5rem; 
+                   margin-bottom: 0.5rem; 
+                   text-align: center;
+                   font-weight: 600;'>
+            🏥 Dashboard Clínica Veterinaria
+        </h1>
+        <p style='color: rgba(255,255,255,0.8); 
+                  text-align: center; 
+                  font-size: 1.1rem;'>
+            Panel de Control y Análisis de Datos
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def load_data(url: str):
     r = requests.get(url)
@@ -38,11 +95,6 @@ def load_animales(url: str):
     if r.status_code != 200:
         return None
     return r.json()  # Devuelve la lista de animales
-
-def info_box(texto, color=None):
-    st.markdown(f'<div style="background-color:#4EBAE1;opacity:70%"><p style="text-align:center;color:white;font-size:30px;">{texto}</p></div>', unsafe_allow_html=True)
-
-url_animales = "http://fastapi:8000/animales/"
 
 # Cargar datos de animales desde el backend
 r = requests.get(url_animales)
@@ -79,9 +131,21 @@ df_full_dates["fecha"] = pd.to_datetime(df_full_dates["fecha"])  # Asegurar date
 df_evolucion_full = pd.merge(df_full_dates, df_evolucion, on="fecha", how="left")
 df_evolucion_full["total"] = df_evolucion_full["total"].fillna(0)  # Rellenar días sin datos con 0
 
-st.title("Dashboard")
+# Contenedor principal para métricas
+st.markdown("""
+    <div style='margin: 2rem 0;'>
+        <h2 style='color: #2B4162; 
+                   font-size: 1.8rem; 
+                   margin-bottom: 1.5rem;
+                   text-align: center;'>
+            📊 Nuestros datos
+        </h2>
+    </div>
+""", unsafe_allow_html=True)
 
-# GRÁFICO EVOLUCION AQUI
+# Definir columnas con iconos específicos
+col1, col2, col3 = st.columns(3)
+col4, col5, col6 = st.columns(3)
 
 # Cargar datos de contratos
 df_merged = load_data('http://fastapi:8000/retrieve_data')
@@ -130,64 +194,63 @@ else:
 # Calcular ingreso promedio por cita
 ingreso_promedio_por_cita = facturacion_total_value / num_citas if num_citas > 0 else 0
 
-
-
-
-
-# Otras métricas
-registros = str(df_merged.shape[0])
-adjudicatarios = str(len(df_merged.adjuducatario.unique()))
-centro = str(len(df_merged.centro_seccion.unique()))
-tipologia = str(len(df_merged.tipo.unique()))
-presupuesto_medio = str(round(df_merged.presupuesto_con_iva.mean(), 2))
-adjudicado_medio = str(round(df_merged.importe_adj_con_iva.mean(), 2))
-
-sns.set_palette("pastel")
-
-st.header("Información general")
-
 # Definir columnas
 col1, col2, col3 = st.columns(3)
 col4, col5, col6 = st.columns(3)  # Definir columnas adicionales
 
 with col1:
-    col1.subheader('Clientes')
-    info_box(num_clientes)  # Muestra el número de clientes únicos
+    col1.subheader('👥 Clientes')
+    info_box(num_clientes, "👥")
 with col2:
-    col2.subheader('Nº de tratamientos ')
-    info_box(num_tratamientos)
+    col2.subheader('💉 Tratamientos')
+    info_box(num_tratamientos, "💉")
 with col3:
-    col3.subheader('Animales')
-    info_box(num_animales)
+    col3.subheader('🐾 Animales')
+    info_box(num_animales, "🐾")
 
 with col4:
-    col4.subheader('Beneficio neto')
-    info_box(f'{beneficio_neto_value:,.2f} €')  # Asegúrate de que el valor sea un número
-
+    col4.subheader('💰 Beneficio Neto')
+    info_box(f'{beneficio_neto_value:,.2f} €', "💰")
 with col5:
-    col5.subheader('Facturación total')
-    info_box(f'{facturacion_total_value:,.2f} €')
-
+    col5.subheader('📈 Facturación Total')
+    info_box(f'{facturacion_total_value:,.2f} €', "📈")
 with col6:
-    col6.subheader('Ingreso medio por cita')
-    info_box(f'{ingreso_promedio_por_cita:,.2f} €')
+    col6.subheader('💊 Ingreso por Cita')
+    info_box(f'{ingreso_promedio_por_cita:,.2f} €', "💊")
 
-# Crear el gráfico EVOLUCIÓN
-st.header(f"Evolución de Altas de Animales en {today.strftime('%B %Y')}")
+# Sección de gráficos con estilo mejorado
+st.markdown("""
+    <div style='margin: 3rem 0;'>
+        <h2 style='color: #2B4162; 
+                   font-size: 1.8rem; 
+                   margin-bottom: 1.5rem;
+                   text-align: center;'>
+            📊 Análisis y Tendencias
+        </h2>
+    </div>
+""", unsafe_allow_html=True)
 
-if not df_evolucion_full.empty:
-    fig = px.line(
-        df_evolucion_full,
-        x="fecha",
-        y="total",
-        labels={"fecha": "Fecha", "total": "Animales dados de alta"},
-        title=f"Evolución del Número de Altas de Animales por Día en {today.strftime('%B %Y')}",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("No hay datos disponibles para mostrar la evolución.")
-
-
+# Contenedor para gráficos
+with st.container():
+    # Gráfico de evolución con estilo mejorado
+    if not df_evolucion_full.empty:
+        fig = px.line(
+            df_evolucion_full,
+            x="fecha",
+            y="total",
+            labels={"fecha": "Fecha", "total": "Animales dados de alta"},
+            title=f"Evolución de Altas de Animales - {today.strftime('%B %Y')}"
+        )
+        fig.update_traces(line_color='#4EBAE1', line_width=3)
+        fig.update_layout(
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font={'color': '#2B4162', 'size': 12},
+            title={'font': {'size': 24, 'color': '#2B4162'}},
+            xaxis={'gridcolor': '#E1E5EA'},
+            yaxis={'gridcolor': '#E1E5EA'}
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 # Crear el gráfico de relación entre facturación total y número de clientes
 st.header("Relación entre Facturación Total y Número de Clientes")
