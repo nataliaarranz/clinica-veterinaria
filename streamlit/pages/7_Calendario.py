@@ -266,14 +266,93 @@ class CitaInterface:
             </div>
         """, unsafe_allow_html=True)
         
-        # Botón de cancelar con estilo
-        col1, col2, col3 = st.columns([1,1,1])
+        # Botones de acción
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✏️ Editar Cita", 
+                        key=f"edit_button_{event_data.get('id')}",
+                        type="secondary",
+                        use_container_width=True):
+                self.mostrar_formulario_edicion(event_data)
+        
         with col2:
             if st.button("❌ Cancelar Cita", 
                         key=f"cancel_button_{event_data.get('id')}",
                         type="primary",
                         use_container_width=True):
                 self.cancelar_cita(int(event_data.get('id')))
+
+    def mostrar_formulario_edicion(self, event_data):
+        with st.form(key=f"edit_form_{event_data.get('id')}"):
+            st.markdown("### ✏️ Editar Cita")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                animales = self.get_animales_nombres()
+                nombre_animal = st.selectbox(
+                    "Animal", 
+                    animales,
+                    index=0  # Valor por defecto: primer animal
+                )
+            with col2:
+                duenos = self.get_duenos_nombres()
+                nombre_dueno = st.selectbox(
+                    "Dueño", 
+                    duenos,
+                    index=0  # Valor por defecto: primer dueño
+                )
+            
+            tratamientos = self.get_tratamientos()
+            tratamiento = st.selectbox(
+                "Tipo de cita", 
+                tratamientos,
+                index=tratamientos.index(event_data.get('title')) if event_data.get('title') in tratamientos else 0
+            )
+            
+            if st.form_submit_button("Actualizar Cita"):
+                self.actualizar_cita(
+                    event_data.get('id'),
+                    nombre_animal,
+                    nombre_dueno,
+                    tratamiento,
+                    event_data.get('start'),
+                    event_data.get('end'),
+                    event_data.get('resourceId')
+                )
+
+    def actualizar_cita(self, cita_id, nombre_animal, nombre_dueno, tratamiento, hora_inicio, hora_fin, consulta):
+        data = {
+            "id": cita_id,
+            "nombre_animal": nombre_animal,
+            "nombre_dueno": nombre_dueno,
+            "tratamiento": tratamiento,
+            "fecha_inicio": hora_inicio,
+            "fecha_fin": hora_fin,
+            "consulta": consulta
+        }
+        
+        response = self.cita_service.send(data, method="PUT", cita_id=cita_id)
+        if response == '200':
+            # Actualizar el evento en el estado local
+            for event in st.session_state["events"]:
+                if event["id"] == cita_id:
+                    color = "#FFA500" if consulta == "B" else "#FF4444"
+                    event.update({
+                        "title": tratamiento,
+                        "nombre_animal": nombre_animal,
+                        "nombre_dueno": nombre_dueno,
+                        "start": hora_inicio,
+                        "end": hora_fin,
+                        "backgroundColor": color,
+                        "borderColor": color,
+                        "resourceId": consulta,
+                        "className": f"consultation-{consulta.lower()}"
+                    })
+            st.success("✅ Cita actualizada con éxito!")
+            time.sleep(1)
+            st.rerun()
+        else:
+            st.error(f"❌ Error al actualizar la cita: {response}")
 
     def cancelar_cita(self, cita_id):
         try:

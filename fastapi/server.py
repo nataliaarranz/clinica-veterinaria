@@ -301,13 +301,13 @@ def crear_cita(cita: Cita):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al crear la cita: {str(e)}")
 
-@app.put("/citas/{cita_id}", response_model=Cita)
-def modificar_cita(cita_id: int, cita_actualizada: Cita):
+@app.put("/citas/{cita_id}")
+def modificar_cita(cita_id: int, cita_actualizada: dict):
+    global citas_db
     for index, cita in enumerate(citas_db):
-        if cita.id == cita_id:
+        if cita["id"] == cita_id:
             citas_db[index] = cita_actualizada
-            citas_db[index].id = cita_id
-            return citas_db[index]
+            return {"detail": "Cita actualizada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
 
 @app.delete("/citas/{cita_id}")
