@@ -44,7 +44,8 @@ class Cita(BaseModel):
     nombre_dueno: str
     tratamiento: str
     fecha_inicio: datetime
-    fecha_fin: Optional[datetime] = None
+    fecha_fin: datetime
+    consulta: str
 
 class Factura(BaseModel):
     id: Optional[int]
@@ -284,10 +285,21 @@ def get_citas():
 @app.post("/citas/", response_model=Cita)
 def crear_cita(cita: Cita):
     global next_id
-    cita.id = next_id
-    next_id += 1
-    citas_db.append(cita)
-    return cita
+    try:
+        nueva_cita = {
+            "id": next_id,
+            "nombre_animal": cita.nombre_animal,
+            "nombre_dueno": cita.nombre_dueno,
+            "tratamiento": cita.tratamiento,
+            "fecha_inicio": cita.fecha_inicio,
+            "fecha_fin": cita.fecha_fin,
+            "consulta": cita.consulta
+        }
+        citas_db.append(nueva_cita)
+        next_id += 1
+        return nueva_cita
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al crear la cita: {str(e)}")
 
 @app.put("/citas/{cita_id}", response_model=Cita)
 def modificar_cita(cita_id: int, cita_actualizada: Cita):
@@ -301,7 +313,7 @@ def modificar_cita(cita_id: int, cita_actualizada: Cita):
 @app.delete("/citas/{cita_id}")
 def eliminar_cita(cita_id: int):
     global citas_db
-    citas_db = [cita for cita in citas_db if cita.id != cita_id]
+    citas_db = [cita for cita in citas_db if cita["id"] != cita_id]
     return {"detail": "Cita eliminada exitosamente"}
 
 # Endpoint para recuperar datos de contratos
